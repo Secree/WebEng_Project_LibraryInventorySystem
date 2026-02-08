@@ -1,14 +1,49 @@
 import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import Login from './pages/Login'
+import Register from './pages/Register'
+import AdminDashboard from './pages/AdminDashboard'
+import UserDashboard from './pages/UserDashboard'
+
+type User = {
+  id: string;
+  name: string;
+  email: string;
+  role: string;
+} | null;
 
 function App() {
-  const [count, setCount] = useState(0)
+  const [currentPage, setCurrentPage] = useState<'login' | 'register'>('login')
+  const [user, setUser] = useState<User>(null)
 
+  const handleLoginSuccess = (userData: { id: string; name: string; email: string; role: string }) => {
+    setUser(userData);
+  };
+
+  const handleLogout = () => {
+    setUser(null);
+    setCurrentPage('login');
+  };
+
+  // If user is logged in, show dashboard
+  if (user) {
+    if (user.role === 'admin') {
+      return <AdminDashboard user={user} onLogout={handleLogout} />;
+    } else {
+      return <UserDashboard user={user} onLogout={handleLogout} />;
+    }
+  }
+
+  // If not logged in, show login or register
   return (
     <>
-      Hello, World
+      {currentPage === 'login' ? (
+        <Login 
+          onNavigateToRegister={() => setCurrentPage('register')} 
+          onLoginSuccess={handleLoginSuccess}
+        />
+      ) : (
+        <Register onNavigateToLogin={() => setCurrentPage('login')} />
+      )}
     </>
   )
 }
