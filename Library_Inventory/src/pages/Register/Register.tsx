@@ -14,11 +14,17 @@ function Register() {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [role, setRole] = useState('user');
   const [message, setMessage] = useState('');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (password !== confirmPassword) {
+      setMessage('Passwords do not match');
+      return;
+    }
     
     try {
       const data = await registerUser(name, email, password, role);
@@ -82,9 +88,9 @@ function Register() {
         <div className={styles.formGroup}>
           <input
             type="password"
-            value={password}
+            value={confirmPassword}
             placeholder='Confirm your password'
-            onChange={(e) => setPassword(e.target.value)}
+            onChange={(e) => setConfirmPassword(e.target.value)}
             required
             className={styles.input}
           />
