@@ -1,11 +1,13 @@
 import { useState } from 'react';
-import { register as registerUser } from '../services/auth';
+import { register as registerUser } from '../../services/auth';
+import { useNavigate } from 'react-router-dom';
 
-interface RegisterProps {
-  onNavigateToLogin: () => void;
-}
+// interface RegisterProps {
+//   onNavigateToLogin: () => void;
+// }
 
-function Register({ onNavigateToLogin }: RegisterProps) {
+function Register() {
+  const navigate = useNavigate();
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -19,7 +21,7 @@ function Register({ onNavigateToLogin }: RegisterProps) {
       const data = await registerUser(name, email, password, role);
       if (data && (data.user || data.id)) {
         setMessage('Registration successful! You can now login.');
-        setTimeout(() => onNavigateToLogin(), 1500);
+        setTimeout(() => navigate('/login'), 1500);
       } else {
         setMessage(data.message || 'Registration failed');
       }
@@ -72,7 +74,7 @@ function Register({ onNavigateToLogin }: RegisterProps) {
       {message && <p>{message}</p>}
       <p>
         Already have an account?{' '}
-        <button onClick={onNavigateToLogin}>Login</button>
+        <button onClick={() => navigate('/login')}>Login</button>
       </p>
     </div>
   );

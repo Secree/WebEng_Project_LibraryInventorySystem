@@ -1,28 +1,34 @@
 import { useState } from 'react';
-import { login } from '../services/auth';
+import { login } from '../../services/auth';
+import { useNavigate } from 'react-router-dom';
 
-interface LoginProps {
-  onNavigateToRegister: () => void;
-  onLoginSuccess: (user: { id: string; name: string; email: string; role: string }) => void;
-}
+// interface LoginProps {
+//   onNavigateToRegister: () => void;
+//   onLoginSuccess: (user: { id: string; name: string; email: string; role: string }) => void;
+// }
 
-function Login({ onNavigateToRegister, onLoginSuccess }: LoginProps) {
+function Login() {
+  const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [message, setMessage] = useState('');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     try {
       const data = await login(email, password);
-      // backend returns { message, user } and user contains token
       const user = data.user || data;
+
       if (user && (user.token || user.id)) {
         if (user.token) localStorage.setItem('token', user.token);
         localStorage.setItem('user', JSON.stringify(user));
-        setMessage('Login successful!');
-        onLoginSuccess(user);
+
+        setMessage('Login successful! Redirecting...');
+        setTimeout(() => {
+          if (user.role === 'admin') navigate('/admin');
+          else navigate('/user');
+        }, 500);
       } else {
         setMessage(data.message || 'Login failed');
       }
@@ -45,6 +51,7 @@ function Login({ onNavigateToRegister, onLoginSuccess }: LoginProps) {
             required
           />
         </div>
+
         <div>
           <label>Password:</label>
           <input
@@ -54,12 +61,15 @@ function Login({ onNavigateToRegister, onLoginSuccess }: LoginProps) {
             required
           />
         </div>
+
         <button type="submit">Login</button>
       </form>
+
       {message && <p>{message}</p>}
+
       <p>
         Don't have an account?{' '}
-        <button onClick={onNavigateToRegister}>Register</button>
+        <button onClick={() => navigate('/register')}>Register</button>
       </p>
     </div>
   );
