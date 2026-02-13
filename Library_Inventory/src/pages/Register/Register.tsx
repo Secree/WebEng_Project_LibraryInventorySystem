@@ -78,7 +78,7 @@ function Register() {
           />
         </div>
 
-        <label className={styles.label}>Confirn Password:</label>
+        <label className={styles.label}>Confirm Password:</label>
         <div className={styles.formGroup}>
           <input
             type="password"
