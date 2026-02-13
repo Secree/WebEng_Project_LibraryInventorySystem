@@ -14,3 +14,8 @@ export async function fetchResources() {
   const res = await api.get('/resources');
   return res.data;
 }
+
+export async function getMe() {
+  const res = await api.get('/me');
+  return res.data; // { message, user }
+}

@@ -1,4 +1,6 @@
 import { useState } from 'react'
+import { useEffect } from 'react'
+import { getMe } from './services/auth'
 import Login from './pages/Login'
 import Register from './pages/Register'
 import AdminDashboard from './pages/AdminDashboard'
@@ -32,6 +34,28 @@ function App() {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
   };
+
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    if (!token) return;
+
+    // try to refresh user from backend
+    getMe()
+      .then((data) => {
+        const u = data.user || data;
+        if (u) {
+          setUser(u);
+          localStorage.setItem('user', JSON.stringify(u));
+        }
+      })
+      .catch((err) => {
+        console.error('Failed to refresh user:', err);
+        // clear invalid session
+        setUser(null);
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+      });
+  }, []);
 
   // If user is logged in, show dashboard
   if (user) {

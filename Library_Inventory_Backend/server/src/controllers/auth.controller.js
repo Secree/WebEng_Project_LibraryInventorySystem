@@ -29,6 +29,18 @@ const authController = {
       res.status(401).json({ message: error.message });
     }
   }
+,
+  // Get current authenticated user
+  me: async (req, res) => {
+    try {
+      if (!req.user) return res.status(401).json({ message: 'Not authenticated' });
+      // req.user is set by auth.middleware.verifyToken (decoded JWT)
+      res.status(200).json({ message: 'User fetched', user: req.user });
+    } catch (error) {
+      console.error('Me error:', error);
+      res.status(500).json({ message: error.message });
+    }
+  }
 };
 
 export default authController;
