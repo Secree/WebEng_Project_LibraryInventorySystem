@@ -1,6 +1,9 @@
 import { useState } from 'react';
 import { login } from '../../services/auth';
 import { useNavigate } from 'react-router-dom';
+import { NavLink } from 'react-router-dom';
+import styles from './Login.module.css';
+import logo from '../../assets/images/MAES-logo.png';
 
 // interface LoginProps {
 //   onNavigateToRegister: () => void;
@@ -39,37 +42,47 @@ function Login() {
   };
 
   return (
-    <div>
-      <h1>Login</h1>
+    <div className={styles.container}>
+      <img src={logo} alt="Logo" className={styles.logo} />
+
+      <h3 className={styles.title}>Welcome</h3>
+      <p className={styles.schoolName}>Macario Arnedo Elementary School</p>
+
       <form onSubmit={handleSubmit}>
-        <div>
-          <label>Email:</label>
+        <label className={styles.label}>Email:</label>
+        <div className={styles.formGroup}>
           <input
             type="email"
             value={email}
+            placeholder='YourEmail@example.com'
             onChange={(e) => setEmail(e.target.value)}
             required
+            className={styles.input}
           />
         </div>
-
-        <div>
-          <label>Password:</label>
+        <label className={styles.label}>Password:</label>
+        <div className={styles.formGroup}>
           <input
             type="password"
             value={password}
+            placeholder='Enter your password'
             onChange={(e) => setPassword(e.target.value)}
             required
+            className={styles.input}
           />
         </div>
 
-        <button type="submit">Login</button>
+        <label className={styles.forgotPS}>Forgot password?</label>
+        
+        <button type="submit" className={styles.button}>
+          <b>Sign In</b>
+        </button>
       </form>
 
       {message && <p>{message}</p>}
 
-      <p>
-        Don't have an account?{' '}
-        <button onClick={() => navigate('/register')}>Register</button>
+      <p className={styles.register}>
+        Don't have an account? <NavLink to="/register" className={styles.registerLink}>Sign Up</NavLink>
       </p>
     </div>
   );
