@@ -1,6 +1,9 @@
 import { useState } from 'react';
 import { register as registerUser } from '../../services/auth';
 import { useNavigate } from 'react-router-dom';
+import { NavLink } from 'react-router-dom';
+import styles from './Register.module.css';
+import logo from '../../assets/images/MAES-logo.png';
 
 // interface RegisterProps {
 //   onNavigateToLogin: () => void;
@@ -32,49 +35,78 @@ function Register() {
   };
 
   return (
-    <div>
-      <h1>Register</h1>
+    <div className={styles.container}>
+      <img src={logo} alt="Logo" className={styles.logo} />
+
+      <h3 className={styles.title}>Create Account</h3>
+      <p className={styles.schoolName}>Macario Arnedo Elementary School</p>
+
       <form onSubmit={handleSubmit}>
-        <div>
-          <label>Name:</label>
+        <label className={styles.label}>Full Name:</label>
+        <div className={styles.formGroup}>
           <input
             type="text"
             value={name}
+            placeholder='Juan Crisostomo Dela Cruz'
             onChange={(e) => setName(e.target.value)}
             required
+            className={styles.input}
           />
         </div>
-        <div>
-          <label>Email:</label>
+
+        <label className={styles.label}>Email:</label>
+        <div className={styles.formGroup}>
           <input
             type="email"
             value={email}
+            placeholder='YourEmail@example.com'
             onChange={(e) => setEmail(e.target.value)}
             required
+            className={styles.input}
           />
         </div>
-        <div>
-          <label>Password:</label>
+
+        <label className={styles.label}>Password:</label>
+        <div className={styles.formGroup}>
           <input
             type="password"
             value={password}
+            placeholder='Create your password'
             onChange={(e) => setPassword(e.target.value)}
             required
+            className={styles.input}
           />
         </div>
+
+        <label className={styles.label}>Confirn Password:</label>
+        <div className={styles.formGroup}>
+          <input
+            type="password"
+            value={password}
+            placeholder='Confirm your password'
+            onChange={(e) => setPassword(e.target.value)}
+            required
+            className={styles.input}
+          />
+        </div>
+
+        <label className={styles.label}>Role:</label>
         <div>
-          <label>Role:</label>
           <select value={role} onChange={(e) => setRole(e.target.value)}>
             <option value="user">User</option>
             <option value="admin">Admin</option>
           </select>
         </div>
-        <button type="submit">Register</button>
+
+        <button type="submit" className={styles.button}>
+          <b>Register</b>
+        </button>
       </form>
+
       {message && <p>{message}</p>}
-      <p>
-        Already have an account?{' '}
-        <button onClick={() => navigate('/login')}>Login</button>
+
+      <p className={styles.login}>
+        Already have an account? <NavLink to="/login" className={styles.loginLink}>Login</NavLink>
       </p>
     </div>
   );

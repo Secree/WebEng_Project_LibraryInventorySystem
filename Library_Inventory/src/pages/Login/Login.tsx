@@ -60,6 +60,7 @@ function Login() {
             className={styles.input}
           />
         </div>
+        
         <label className={styles.label}>Password:</label>
         <div className={styles.formGroup}>
           <input
@@ -82,7 +83,7 @@ function Login() {
       {message && <p>{message}</p>}
 
       <p className={styles.register}>
-        Don't have an account? <NavLink to="/register" className={styles.registerLink}>Sign Up</NavLink>
+        Don't have an account? <NavLink to="/register" className={styles.registerLink}>Register</NavLink>
       </p>
     </div>
   );
