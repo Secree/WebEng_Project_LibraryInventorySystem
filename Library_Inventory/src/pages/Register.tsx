@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { register as registerUser } from '../services/auth';
 
 interface RegisterProps {
   onNavigateToLogin: () => void;
@@ -15,22 +16,10 @@ function Register({ onNavigateToLogin }: RegisterProps) {
     e.preventDefault();
     
     try {
-      const response = await fetch('http://localhost:3000/api/register', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ name, email, password, role }),
-      });
-
-      const data = await response.json();
-      
-      if (response.ok) {
+      const data = await registerUser(name, email, password, role);
+      if (data && (data.user || data.id)) {
         setMessage('Registration successful! You can now login.');
-        console.log('Register response:', data);
-        setTimeout(() => {
-          onNavigateToLogin();
-        }, 2000);
+        setTimeout(() => onNavigateToLogin(), 1500);
       } else {
         setMessage(data.message || 'Registration failed');
       }
