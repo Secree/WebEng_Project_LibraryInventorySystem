@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { login } from '../services/auth';
 
 interface LoginProps {
   onNavigateToRegister: () => void;
@@ -14,20 +15,14 @@ function Login({ onNavigateToRegister, onLoginSuccess }: LoginProps) {
     e.preventDefault();
     
     try {
-      const response = await fetch('http://localhost:3000/api/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email, password }),
-      });
-
-      const data = await response.json();
-      
-      if (response.ok) {
+      const data = await login(email, password);
+      // backend returns { message, user } and user contains token
+      const user = data.user || data;
+      if (user && (user.token || user.id)) {
+        if (user.token) localStorage.setItem('token', user.token);
+        localStorage.setItem('user', JSON.stringify(user));
         setMessage('Login successful!');
-        console.log('Login response:', data);
-        onLoginSuccess(data.user);
+        onLoginSuccess(user);
       } else {
         setMessage(data.message || 'Login failed');
       }

@@ -1,5 +1,6 @@
 // Authentication service
 import { admin, db } from '../config/firebase.js';
+import jwt from 'jsonwebtoken';
 
 const authService = {
   // Register new user
@@ -31,12 +32,20 @@ const authService = {
 
       const docRef = await usersRef.add(newUser);
 
-      return {
+      const returnedUser = {
         id: docRef.id,
         name: newUser.name,
         email: newUser.email,
         role: newUser.role
       };
+
+      const token = jwt.sign(
+        { id: returnedUser.id, name: returnedUser.name, email: returnedUser.email, role: returnedUser.role },
+        process.env.JWT_SECRET || 'defaultsecret',
+        { expiresIn: '1h' }
+      );
+
+      return { ...returnedUser, token };
     } catch (error) {
       throw error;
     }
@@ -66,12 +75,20 @@ const authService = {
       const userDoc = snapshot.docs[0];
       const userData = userDoc.data();
 
-      return {
+      const returnedUser = {
         id: userDoc.id,
         name: userData.name,
         email: userData.email,
         role: userData.role || 'user'
       };
+
+      const token = jwt.sign(
+        { id: returnedUser.id, name: returnedUser.name, email: returnedUser.email, role: returnedUser.role },
+        process.env.JWT_SECRET || 'defaultsecret',
+        { expiresIn: '1h' }
+      );
+
+      return { ...returnedUser, token };
     } catch (error) {
       throw error;
     }

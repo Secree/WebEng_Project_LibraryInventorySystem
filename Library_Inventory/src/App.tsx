@@ -13,7 +13,14 @@ type User = {
 
 function App() {
   const [currentPage, setCurrentPage] = useState<'login' | 'register'>('login')
-  const [user, setUser] = useState<User>(null)
+  const [user, setUser] = useState<User>(() => {
+    try {
+      const u = localStorage.getItem('user');
+      return u ? JSON.parse(u) : null;
+    } catch (e) {
+      return null;
+    }
+  })
 
   const handleLoginSuccess = (userData: { id: string; name: string; email: string; role: string }) => {
     setUser(userData);
@@ -22,6 +29,8 @@ function App() {
   const handleLogout = () => {
     setUser(null);
     setCurrentPage('login');
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
   };
 
   // If user is logged in, show dashboard
