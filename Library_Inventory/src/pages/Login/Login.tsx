@@ -1,12 +1,17 @@
 import { useState } from 'react';
-import { login } from '../services/auth';
+import { login } from '../../services/auth';
+import { useNavigate } from 'react-router-dom';
+import { NavLink } from 'react-router-dom';
+import styles from './Login.module.css';
+import logo from '../../assets/images/MAES-logo.png';
 
-interface LoginProps {
-  onNavigateToRegister: () => void;
-  onLoginSuccess: (user: { id: string; name: string; email: string; role: string }) => void;
-}
+// interface LoginProps {
+//   onNavigateToRegister: () => void;
+//   onLoginSuccess: (user: { id: string; name: string; email: string; role: string }) => void;
+// }
 
-function Login({ onNavigateToRegister, onLoginSuccess }: LoginProps) {
+function Login() {
+  const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [message, setMessage] = useState('');
@@ -14,11 +19,12 @@ function Login({ onNavigateToRegister, onLoginSuccess }: LoginProps) {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if(!email || !password) {
+    // Validation
+    if (!email || !password) {
       setMessage('Please enter both email and password');
       return;
     }
-    if(email.trim() === "") {
+    if (email.trim() === "") {
       setMessage('Email is required');
       return;
     }
@@ -26,16 +32,21 @@ function Login({ onNavigateToRegister, onLoginSuccess }: LoginProps) {
       setMessage('Invalid email address');
       return;
     }
-    
+
     try {
       const data = await login(email, password);
-      // backend returns { message, user } - token is now in httpOnly cookie
+      // Backend returns { message, user } - token is now in httpOnly cookie
       const user = data.user || data;
+
       if (user && user.id) {
         // Token is automatically stored in httpOnly cookie by browser
         localStorage.setItem('user', JSON.stringify(user));
-        setMessage('Login successful!');
-        onLoginSuccess(user);
+
+        setMessage('Login successful! Redirecting...');
+        setTimeout(() => {
+          if (user.role === 'admin') navigate('/admin');
+          else navigate('/user');
+        }, 500);
       } else {
         setMessage(data.message || 'Login failed');
       }
@@ -58,33 +69,48 @@ function Login({ onNavigateToRegister, onLoginSuccess }: LoginProps) {
   };
 
   return (
-    <div>
-      <h1>Login</h1>
+    <div className={styles.container}>
+      <img src={logo} alt="Logo" className={styles.logo} />
+
+      <h3 className={styles.title}>Welcome</h3>
+      <p className={styles.schoolName}>Macario Arnedo Elementary School</p>
+
       <form onSubmit={handleSubmit}>
-        <div>
-          <label>Email:</label>
+        <label className={styles.label}>Email:</label>
+        <div className={styles.formGroup}>
           <input
             type="email"
             value={email}
+            placeholder='YourEmail@example.com'
             onChange={(e) => setEmail(e.target.value)}
             required
+            className={styles.input}
           />
         </div>
-        <div>
-          <label>Password:</label>
+        
+        <label className={styles.label}>Password:</label>
+        <div className={styles.formGroup}>
           <input
             type="password"
             value={password}
+            placeholder='Enter your password'
             onChange={(e) => setPassword(e.target.value)}
             required
+            className={styles.input}
           />
         </div>
-        <button type="submit">Login</button>
+
+        <label className={styles.forgotPS}>Forgot password?</label>
+        
+        <button type="submit" className={styles.button}>
+          <b>Sign In</b>
+        </button>
       </form>
+
       {message && <p>{message}</p>}
-      <p>
-        Don't have an account?{' '}
-        <button onClick={onNavigateToRegister}>Register</button>
+
+      <p className={styles.register}>
+        Don't have an account? <NavLink to="/register" className={styles.registerLink}>Register</NavLink>
       </p>
     </div>
   );

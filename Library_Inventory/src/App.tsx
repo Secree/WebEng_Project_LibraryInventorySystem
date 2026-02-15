@@ -1,10 +1,12 @@
-import { useState } from 'react'
-import { useEffect } from 'react'
-import { getMe, logout } from './services/auth'
-import Login from './pages/Login'
-import Register from './pages/Register'
-import AdminDashboard from './pages/AdminDashboard'
-import UserDashboard from './pages/UserDashboard'
+import { useState, useEffect } from 'react';
+import type { PropsWithChildren } from 'react';
+import { getMe, logout } from './services/auth';
+import { Routes, Route, Navigate } from 'react-router-dom';
+// pages
+import Login from './pages/Login/Login';
+import Register from './pages/Register/Register';
+import AdminDashboard from './pages/AdminDashboard';
+import UserDashboard from './pages/UserDashboard';
 
 type User = {
   id: string;
@@ -14,7 +16,6 @@ type User = {
 } | null;
 
 function App() {
-  const [currentPage, setCurrentPage] = useState<'login' | 'register'>('login')
   const [user, setUser] = useState<User>(() => {
     try {
       const u = localStorage.getItem('user');
@@ -22,11 +23,11 @@ function App() {
     } catch (e) {
       return null;
     }
-  })
+  });
 
-  const handleLoginSuccess = (userData: { id: string; name: string; email: string; role: string }) => {
-    setUser(userData);
-  };
+  // const handleLoginSuccess = (userData: { id: string; name: string; email: string; role: string }) => {
+  //   setUser(userData);
+  // };
 
   const handleLogout = async () => {
     try {
@@ -35,8 +36,6 @@ function App() {
       console.error('Logout error:', err);
     }
     setUser(null);
-    setCurrentPage('login');
-    // Token cookie is cleared by server, user is removed from localStorage
     localStorage.removeItem('user');
   };
 
@@ -59,27 +58,60 @@ function App() {
       });
   }, []);
 
-  // If user is logged in, show dashboard
-  if (user) {
-    if (user.role === 'admin') {
-      return <AdminDashboard user={user} onLogout={handleLogout} />;
-    } else {
-      return <UserDashboard user={user} onLogout={handleLogout} />;
-    }
-  }
+  const ProtectedRoute = ({ children }: PropsWithChildren) => {
+    if (!user) return <Navigate to="/login" />;
+    return <>{children}</>;
+  };
 
   // If not logged in, show login or register
   return (
-    <>
-      {currentPage === 'login' ? (
-        <Login 
-          onNavigateToRegister={() => setCurrentPage('register')} 
-          onLoginSuccess={handleLoginSuccess}
-        />
-      ) : (
-        <Register onNavigateToLogin={() => setCurrentPage('login')} />
-      )}
-    </>
+    <Routes>
+
+      {/* Public Routes */}
+      <Route path="/login" element={<Login />} />
+      <Route path="/register" element={<Register />} />
+
+      {/* Admin Dashboard */}
+      <Route
+        path="/admin"
+        element={
+          <ProtectedRoute>
+            {user?.role === 'admin' ? (
+              <AdminDashboard user={user} onLogout={handleLogout} />
+            ) : (
+              <Navigate to="/user" />
+            )}
+          </ProtectedRoute>
+        }
+      />
+
+      {/* User Dashboard */}
+      <Route
+        path="/user"
+        element={
+          <ProtectedRoute>
+            {user?.role === 'user' ? (
+              <UserDashboard user={user} onLogout={handleLogout} />
+            ) : (
+              <Navigate to="/admin" />
+            )}
+          </ProtectedRoute>
+        }
+      />
+
+      {/* Default Route */}
+      <Route
+        path="*"
+        element={
+          user ? (
+            <Navigate to={user.role === 'admin' ? '/admin' : '/user'} />
+          ) : (
+            <Navigate to="/login" />
+          )
+        }
+      />
+
+    </Routes>
   )
 }
 
