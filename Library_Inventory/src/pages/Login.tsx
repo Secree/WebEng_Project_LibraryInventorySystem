@@ -16,10 +16,10 @@ function Login({ onNavigateToRegister, onLoginSuccess }: LoginProps) {
     
     try {
       const data = await login(email, password);
-      // backend returns { message, user } and user contains token
+      // backend returns { message, user } - token is now in httpOnly cookie
       const user = data.user || data;
-      if (user && (user.token || user.id)) {
-        if (user.token) localStorage.setItem('token', user.token);
+      if (user && user.id) {
+        // Token is automatically stored in httpOnly cookie by browser
         localStorage.setItem('user', JSON.stringify(user));
         setMessage('Login successful!');
         onLoginSuccess(user);
