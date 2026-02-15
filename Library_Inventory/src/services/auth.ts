@@ -10,6 +10,11 @@ export async function register(name: string, email: string, password: string, ro
   return res.data;
 }
 
+export async function logout() {
+  const res = await api.post('/logout');
+  return res.data;
+}
+
 export async function fetchResources() {
   const res = await api.get('/resources');
   return res.data;
