@@ -13,6 +13,19 @@ function Login({ onNavigateToRegister, onLoginSuccess }: LoginProps) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if(!email || !password) {
+      setMessage('Please enter both email and password');
+      return;
+    }
+    if(email.trim() === "") {
+      setMessage('Email is required');
+      return;
+    }
+    if (!email.includes('@')) {
+      setMessage('Invalid email address');
+      return;
+    }
     
     try {
       const data = await login(email, password);
@@ -26,8 +39,20 @@ function Login({ onNavigateToRegister, onLoginSuccess }: LoginProps) {
       } else {
         setMessage(data.message || 'Login failed');
       }
-    } catch (error) {
-      setMessage('Error connecting to server');
+    } catch (error: any) {
+      if (error.response?.data?.message) {
+        // Backend validation error (401, 400, etc.)
+        setMessage(error.response.data.message);
+      } else if (error.response?.status === 500) {
+        // Server error
+        setMessage('Server error. Please try again later.');
+      } else if (error.message === 'Network Error') {
+        // Network error
+        setMessage('Network error. Check your connection.');
+      } else {
+        // Unknown error
+        setMessage('Error connecting to server');
+      }
       console.error('Login error:', error);
     }
   };

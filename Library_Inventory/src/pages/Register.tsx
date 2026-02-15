@@ -23,8 +23,20 @@ function Register({ onNavigateToLogin }: RegisterProps) {
       } else {
         setMessage(data.message || 'Registration failed');
       }
-    } catch (error) {
-      setMessage('Error connecting to server');
+    } catch (error: any) {
+      if (error.response?.data?.message) {
+        // Backend validation error (401, 400, etc.)
+        setMessage(error.response.data.message);
+      } else if (error.response?.status === 500) {
+        // Server error
+        setMessage('Server error. Please try again later.');
+      } else if (error.message === 'Network Error') {
+        // Network error
+        setMessage('Network error. Check your connection.');
+      } else {
+        // Unknown error
+        setMessage('Error connecting to server');
+      }
       console.error('Register error:', error);
     }
   };
