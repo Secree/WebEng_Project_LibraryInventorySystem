@@ -13,21 +13,46 @@ function Login({ onNavigateToRegister, onLoginSuccess }: LoginProps) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if(!email || !password) {
+      setMessage('Please enter both email and password');
+      return;
+    }
+    if(email.trim() === "") {
+      setMessage('Email is required');
+      return;
+    }
+    if (!email.includes('@')) {
+      setMessage('Invalid email address');
+      return;
+    }
     
     try {
       const data = await login(email, password);
-      // backend returns { message, user } and user contains token
+      // backend returns { message, user } - token is now in httpOnly cookie
       const user = data.user || data;
-      if (user && (user.token || user.id)) {
-        if (user.token) localStorage.setItem('token', user.token);
+      if (user && user.id) {
+        // Token is automatically stored in httpOnly cookie by browser
         localStorage.setItem('user', JSON.stringify(user));
         setMessage('Login successful!');
         onLoginSuccess(user);
       } else {
         setMessage(data.message || 'Login failed');
       }
-    } catch (error) {
-      setMessage('Error connecting to server');
+    } catch (error: any) {
+      if (error.response?.data?.message) {
+        // Backend validation error (401, 400, etc.)
+        setMessage(error.response.data.message);
+      } else if (error.response?.status === 500) {
+        // Server error
+        setMessage('Server error. Please try again later.');
+      } else if (error.message === 'Network Error') {
+        // Network error
+        setMessage('Network error. Check your connection.');
+      } else {
+        // Unknown error
+        setMessage('Error connecting to server');
+      }
       console.error('Login error:', error);
     }
   };

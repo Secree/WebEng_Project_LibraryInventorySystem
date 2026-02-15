@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useEffect } from 'react'
-import { getMe } from './services/auth'
+import { getMe, logout } from './services/auth'
 import Login from './pages/Login'
 import Register from './pages/Register'
 import AdminDashboard from './pages/AdminDashboard'
@@ -28,18 +28,21 @@ function App() {
     setUser(userData);
   };
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    try {
+      await logout();
+    } catch (err) {
+      console.error('Logout error:', err);
+    }
     setUser(null);
     setCurrentPage('login');
-    localStorage.removeItem('token');
+    // Token cookie is cleared by server, user is removed from localStorage
     localStorage.removeItem('user');
   };
 
   useEffect(() => {
-    const token = localStorage.getItem('token');
-    if (!token) return;
-
     // try to refresh user from backend
+    // Backend will check for httpOnly cookie automatically
     getMe()
       .then((data) => {
         const u = data.user || data;
@@ -52,7 +55,6 @@ function App() {
         console.error('Failed to refresh user:', err);
         // clear invalid session
         setUser(null);
-        localStorage.removeItem('token');
         localStorage.removeItem('user');
       });
   }, []);
