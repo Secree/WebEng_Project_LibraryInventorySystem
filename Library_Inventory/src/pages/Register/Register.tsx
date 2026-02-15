@@ -21,6 +21,27 @@ function Register() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    // Validation
+    if (!name || !email || !password || !confirmPassword) {
+      setMessage('Please fill in all fields');
+      return;
+    }
+    if (name.trim() === "") {
+      setMessage('Name is required');
+      return;
+    }
+    if (email.trim() === "") {
+      setMessage('Email is required');
+      return;
+    }
+    if (!email.includes('@')) {
+      setMessage('Invalid email address');
+      return;
+    }
+    if (password.length < 6) {
+      setMessage('Password must be at least 6 characters');
+      return;
+    }
     if (password !== confirmPassword) {
       setMessage('Passwords do not match');
       return;
@@ -34,8 +55,20 @@ function Register() {
       } else {
         setMessage(data.message || 'Registration failed');
       }
-    } catch (error) {
-      setMessage('Error connecting to server');
+    } catch (error: any) {
+      if (error.response?.data?.message) {
+        // Backend validation error (401, 400, etc.)
+        setMessage(error.response.data.message);
+      } else if (error.response?.status === 500) {
+        // Server error
+        setMessage('Server error. Please try again later.');
+      } else if (error.message === 'Network Error') {
+        // Network error
+        setMessage('Network error. Check your connection.');
+      } else {
+        // Unknown error
+        setMessage('Error connecting to server');
+      }
       console.error('Register error:', error);
     }
   };

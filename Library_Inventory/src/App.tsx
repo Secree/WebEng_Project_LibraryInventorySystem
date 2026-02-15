@@ -36,7 +36,6 @@ function App() {
       console.error('Logout error:', err);
     }
     setUser(null);
-    localStorage.removeItem('token');
     localStorage.removeItem('user');
   };
 
