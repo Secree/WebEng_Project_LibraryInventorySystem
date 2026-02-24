@@ -1,0 +1,106 @@
+.logo {
+  display: block;
+  margin: 0 auto 15px auto;
+  width: 90px;
+  height: auto;
+}
+
+.container {
+  width: 400px;
+  margin: 80px auto;
+  padding: 30px;
+  border: 3px solid #E2E8F0;
+  border-radius: 15px;
+  color: black;
+  background-color: #ffffff;
+  box-shadow: 0 10px 25px rgba(56, 119, 255, 0.3);
+  font-family: sans-serif, Arial;
+}
+
+.title {
+  text-align: center;
+  font-size: large;
+  margin: 1px;
+  color: #1b5deb;
+}
+
+.schoolName {
+    text-align: center;
+    margin: 1px;
+    margin-bottom: 15px;
+    color: #8b8b8b;
+}
+
+.formGroup {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 15px;
+}
+
+.label {
+  display: block;
+  margin-bottom: 6px;
+  font-weight: 600;
+  color: #555;
+}
+
+.input {
+  width: 100%;
+  padding: 10px;
+  border-radius: 6px;
+  color: black;
+  border: 1px solid #ccc;
+  background-color: white;
+  font-size: 14px;
+  outline: none;
+}
+
+.input:focus {
+  border-color: #4f46e5;
+  box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.2);
+}
+
+.button {
+  width: 100%;
+  padding: 10px;
+  background-color: #2563EB;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 16px;
+  cursor: pointer;
+  margin-top: 15px;
+  transition: 0.5s ease;
+}
+
+.button:hover {
+  background-color: #1d55ce;
+}
+
+/* .message {
+  margin-top: 15px;
+  text-align: center;
+  color: #e11d48;
+} */
+
+.forgotPS {
+    font-size: 15px;
+    color: #2563EB;
+}
+
+.register {
+  font-size: 15px;
+  margin-top: 20px;
+  text-align: center;
+  color: #8b8b8b;
+}
+
+.registerLink {
+  color: #2563EB;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.registerLink:hover {
+  text-decoration: underline;
+}
