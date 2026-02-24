@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import type { PropsWithChildren } from 'react';
 import { getMe, logout } from './services/auth';
-import { Routes, Route, Navigate } from 'react-router-dom';
+import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 // pages
 import Login from './pages/Login/Login';
 import Register from './pages/Register/Register';
@@ -16,6 +16,7 @@ type User = {
 } | null;
 
 function App() {
+  const location = useLocation();
   const [user, setUser] = useState<User>(() => {
     try {
       const u = localStorage.getItem('user');
@@ -25,9 +26,10 @@ function App() {
     }
   });
 
-  // const handleLoginSuccess = (userData: { id: string; name: string; email: string; role: string }) => {
-  //   setUser(userData);
-  // };
+  const handleLoginSuccess = (userData: { id: string; name: string; email: string; role: string }) => {
+    setUser(userData);
+    localStorage.setItem('user', JSON.stringify(userData));
+  };
 
   const handleLogout = async () => {
     try {
@@ -52,11 +54,27 @@ function App() {
       })
       .catch((err) => {
         console.error('Failed to refresh user:', err);
-        // clear invalid session
-        setUser(null);
-        localStorage.removeItem('user');
+        // clear invalid session if not on public routes
+        if (location.pathname !== '/login' && location.pathname !== '/register') {
+          setUser(null);
+          localStorage.removeItem('user');
+        }
       });
   }, []);
+
+  // Re-check localStorage when location changes (for when Login updates it)
+  useEffect(() => {
+    if (!user && location.pathname !== '/login' && location.pathname !== '/register') {
+      try {
+        const u = localStorage.getItem('user');
+        if (u) {
+          setUser(JSON.parse(u));
+        }
+      } catch (e) {
+        console.error('Error reading user from localStorage:', e);
+      }
+    }
+  }, [location, user]);
 
   const ProtectedRoute = ({ children }: PropsWithChildren) => {
     if (!user) return <Navigate to="/login" />;
@@ -68,7 +86,7 @@ function App() {
     <Routes>
 
       {/* Public Routes */}
-      <Route path="/login" element={<Login />} />
+      <Route path="/login" element={<Login onLoginSuccess={handleLoginSuccess} />} />
       <Route path="/register" element={<Register />} />
 
       {/* Admin Dashboard */}

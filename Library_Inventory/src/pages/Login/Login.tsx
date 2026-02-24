@@ -5,12 +5,11 @@ import { NavLink } from 'react-router-dom';
 import styles from './Login.module.css';
 import logo from '../../assets/images/MAES-logo.png';
 
-// interface LoginProps {
-//   onNavigateToRegister: () => void;
-//   onLoginSuccess: (user: { id: string; name: string; email: string; role: string }) => void;
-// }
+interface LoginProps {
+  onLoginSuccess: (user: { id: string; name: string; email: string; role: string }) => void;
+}
 
-function Login() {
+function Login({ onLoginSuccess }: LoginProps) {
   const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -39,8 +38,8 @@ function Login() {
       const user = data.user || data;
 
       if (user && user.id) {
-        // Token is automatically stored in httpOnly cookie by browser
-        localStorage.setItem('user', JSON.stringify(user));
+        // Update App's state via callback
+        onLoginSuccess(user);
 
         setMessage('Login successful! Redirecting...');
         setTimeout(() => {

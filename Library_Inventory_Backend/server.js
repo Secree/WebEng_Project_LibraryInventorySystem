@@ -4,6 +4,7 @@ import dotenv from 'dotenv';
 import cookieParser from 'cookie-parser';
 import authRoutes from './server/src/routes/auth.routes.js';
 import userRoutes from './server/src/routes/user.routes.js';
+import resourceRoutes from './server/src/routes/resource.routes.js';
 
 dotenv.config();
 
@@ -21,6 +22,7 @@ app.use(cookieParser());
 // Routes
 app.use('/api', authRoutes);
 app.use('/api/admin', userRoutes);
+app.use('/api/resources', resourceRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {
