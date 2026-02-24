@@ -1,14 +1,16 @@
 // Resource routes
-const express = require('express');
+import express from 'express';
+import resourceController from '../controllers/resource.controller.js';
+import authMiddleware from '../middleware/auth.middleware.js';
+
 const router = express.Router();
-const resourceController = require('../controllers/resource.controller');
-const authMiddleware = require('../middleware/auth.middleware');
 
 // Resource routes
 router.get('/', resourceController.getAllResources);
 router.get('/:id', resourceController.getResourceById);
 router.post('/', authMiddleware.verifyToken, resourceController.createResource);
+router.post('/bulk', authMiddleware.verifyToken, resourceController.bulkCreateResources);
 router.put('/:id', authMiddleware.verifyToken, resourceController.updateResource);
 router.delete('/:id', authMiddleware.verifyToken, resourceController.deleteResource);
 
-module.exports = router;
+export default router;

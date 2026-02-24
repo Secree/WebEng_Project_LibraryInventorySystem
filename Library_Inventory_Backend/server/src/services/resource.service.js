@@ -1,5 +1,5 @@
 // Resource service
-const { db } = require('../config/firebase');
+import { db } from '../config/firebase.js';
 
 const resourceService = {
   // Get all resources
@@ -63,7 +63,29 @@ const resourceService = {
     } catch (error) {
       throw new Error(`Failed to delete resource: ${error.message}`);
     }
+  },
+
+  // Bulk create resources
+  bulkCreateResources: async (resourcesArray) => {
+    try {
+      const batch = db.batch();
+      const createdResources = [];
+      
+      resourcesArray.forEach(resourceData => {
+        const docRef = db.collection('resources').doc();
+        batch.set(docRef, {
+          ...resourceData,
+          createdAt: new Date().toISOString()
+        });
+        createdResources.push({ id: docRef.id, ...resourceData });
+      });
+      
+      await batch.commit();
+      return createdResources;
+    } catch (error) {
+      throw new Error(`Failed to bulk create resources: ${error.message}`);
+    }
   }
 };
 
-module.exports = resourceService;
+export default resourceService;
