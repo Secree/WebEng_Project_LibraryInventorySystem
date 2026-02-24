@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
-import Inventory from './Inventory/Inventory';
+import Inventory from '../Inventory/Inventory';
+import styles from './AdminDashboard.module.css';
+import logo from '../../assets/images/MAES-logo.png'
 
 interface AdminDashboardProps {
   user: { id: string; name: string; email: string; role: string };
@@ -92,43 +94,26 @@ function AdminDashboard({ user, onLogout }: AdminDashboardProps) {
   });
 
   return (
-    <div style={{ padding: '20px' }}>
-      <div style={{ 
-        display: 'flex', 
-        justifyContent: 'space-between', 
-        alignItems: 'center',
-        marginBottom: '20px',
-        padding: '15px',
-        background: '#f8f9fa',
-        borderRadius: '8px'
-      }}>
-        <div>
-          <h1 style={{ margin: '0 0 5px 0' }}>Admin Dashboard</h1>
-          <p style={{ margin: 0, color: '#666' }}>Welcome, {user.name}!</p>
+    <div className={styles.main}>
+      <div className={styles.header}>
+        <div className={styles.headerLogo}>
+          <img src={logo} alt="Logo" className={styles.logo} />
+          <div className={styles.headerName}>
+            <h2>Macario Arnedo Elementary</h2>
+            <p>Welcome, {user.name} to Resource Inventory</p>
+          </div>
         </div>
-        <button 
-          onClick={onLogout}
-          style={{
-            padding: '10px 20px',
-            background: '#e74c3c',
-            color: 'white',
-            border: 'none',
-            borderRadius: '6px',
-            cursor: 'pointer',
-            fontWeight: 'bold'
-          }}
-        >
-          Logout
-        </button>
-      </div>
-
-      <div style={{ marginBottom: '20px', display: 'flex', gap: '5px' }}>
-        <button onClick={() => setActiveTab('inventory')} style={tabStyle('inventory')}>
-          📚 Inventory Management
-        </button>
-        <button onClick={() => setActiveTab('users')} style={tabStyle('users')}>
-          👥 User Management
-        </button>
+        <div>
+          <button onClick={() => setActiveTab('inventory')} style={tabStyle('inventory')}>
+            📚 Inventory Management
+          </button>
+          <button onClick={() => setActiveTab('users')} style={tabStyle('users')}>
+            👥 User Management
+          </button>
+          <button onClick={onLogout} className={styles.logoutBTN}>
+            Logout
+          </button>
+        </div>
       </div>
 
       {activeTab === 'inventory' ? (
