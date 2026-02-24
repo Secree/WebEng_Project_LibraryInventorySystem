@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import Inventory from './Inventory/Inventory';
 
 interface AdminDashboardProps {
   user: { id: string; name: string; email: string; role: string };
@@ -16,6 +17,7 @@ function AdminDashboard({ user, onLogout }: AdminDashboardProps) {
   const [users, setUsers] = useState<User[]>([]);
   const [message, setMessage] = useState('');
   const [loading, setLoading] = useState(false);
+  const [activeTab, setActiveTab] = useState<'inventory' | 'users'>('inventory');
 
   const fetchUsers = async () => {
     setLoading(true);
@@ -73,49 +75,153 @@ function AdminDashboard({ user, onLogout }: AdminDashboardProps) {
   };
 
   useEffect(() => {
-    fetchUsers();
-  }, []);
+    if (activeTab === 'users') {
+      fetchUsers();
+    }
+  }, [activeTab]);
+
+  const tabStyle = (tab: 'inventory' | 'users') => ({
+    padding: '12px 24px',
+    background: activeTab === tab ? '#3498db' : '#ecf0f1',
+    color: activeTab === tab ? 'white' : '#2c3e50',
+    border: 'none',
+    cursor: 'pointer',
+    fontWeight: 'bold',
+    fontSize: '14px',
+    borderRadius: '6px 6px 0 0',
+  });
 
   return (
-    <div>
-      <h1>Admin Dashboard</h1>
-      <p>Welcome, {user.name} (Admin)</p>
-      <button onClick={onLogout}>Logout</button>
-      <hr />
-      <h2>All Users</h2>
-      <button onClick={fetchUsers} disabled={loading}>
-        {loading ? 'Loading...' : 'Refresh Users'}
-      </button>
-      {message && <p>{message}</p>}
-      {users.length > 0 ? (
-        <table border={1}>
-          <thead>
-            <tr>
-              <th>ID</th>
-              <th>Name</th>
-              <th>Email</th>
-              <th>Role</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {users.map((u) => (
-              <tr key={u.id}>
-                <td>{u.id}</td>
-                <td>{u.name}</td>
-                <td>{u.email}</td>
-                <td>{u.role}</td>
-                <td>
-                  {u.id !== user.id && (
-                    <button onClick={() => deleteUser(u.id)}>Delete</button>
-                  )}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+    <div style={{ padding: '20px' }}>
+      <div style={{ 
+        display: 'flex', 
+        justifyContent: 'space-between', 
+        alignItems: 'center',
+        marginBottom: '20px',
+        padding: '15px',
+        background: '#f8f9fa',
+        borderRadius: '8px'
+      }}>
+        <div>
+          <h1 style={{ margin: '0 0 5px 0' }}>Admin Dashboard</h1>
+          <p style={{ margin: 0, color: '#666' }}>Welcome, {user.name}!</p>
+        </div>
+        <button 
+          onClick={onLogout}
+          style={{
+            padding: '10px 20px',
+            background: '#e74c3c',
+            color: 'white',
+            border: 'none',
+            borderRadius: '6px',
+            cursor: 'pointer',
+            fontWeight: 'bold'
+          }}
+        >
+          Logout
+        </button>
+      </div>
+
+      <div style={{ marginBottom: '20px', display: 'flex', gap: '5px' }}>
+        <button onClick={() => setActiveTab('inventory')} style={tabStyle('inventory')}>
+          📚 Inventory Management
+        </button>
+        <button onClick={() => setActiveTab('users')} style={tabStyle('users')}>
+          👥 User Management
+        </button>
+      </div>
+
+      {activeTab === 'inventory' ? (
+        <Inventory userRole="admin" />
       ) : (
-        <p>No users found</p>
+        <div style={{ background: 'white', padding: '20px', borderRadius: '8px' }}>
+          <h2>User Management</h2>
+          <button 
+            onClick={fetchUsers} 
+            disabled={loading}
+            style={{
+              padding: '8px 16px',
+              background: '#3498db',
+              color: 'white',
+              border: 'none',
+              borderRadius: '4px',
+              cursor: loading ? 'not-allowed' : 'pointer',
+              marginBottom: '15px'
+            }}
+          >
+            {loading ? 'Loading...' : 'Refresh Users'}
+          </button>
+          {message && (
+            <p style={{ 
+              padding: '10px', 
+              background: message.includes('success') ? '#d4edda' : '#f8d7da',
+              color: message.includes('success') ? '#155724' : '#721c24',
+              borderRadius: '4px',
+              marginBottom: '15px'
+            }}>
+              {message}
+            </p>
+          )}
+          {users.length > 0 ? (
+            <table style={{ 
+              width: '100%', 
+              borderCollapse: 'collapse',
+              boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+            }}>
+              <thead>
+                <tr style={{ background: '#f8f9fa' }}>
+                  <th style={{ padding: '12px', textAlign: 'left', borderBottom: '2px solid #ddd' }}>ID</th>
+                  <th style={{ padding: '12px', textAlign: 'left', borderBottom: '2px solid #ddd' }}>Name</th>
+                  <th style={{ padding: '12px', textAlign: 'left', borderBottom: '2px solid #ddd' }}>Email</th>
+                  <th style={{ padding: '12px', textAlign: 'left', borderBottom: '2px solid #ddd' }}>Role</th>
+                  <th style={{ padding: '12px', textAlign: 'left', borderBottom: '2px solid #ddd' }}>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {users.map((u) => (
+                  <tr key={u.id} style={{ borderBottom: '1px solid #eee' }}>
+                    <td style={{ padding: '12px' }}>{u.id}</td>
+                    <td style={{ padding: '12px' }}>{u.name}</td>
+                    <td style={{ padding: '12px' }}>{u.email}</td>
+                    <td style={{ padding: '12px' }}>
+                      <span style={{
+                        padding: '4px 12px',
+                        background: u.role === 'admin' ? '#e3f2fd' : '#f3e5f5',
+                        color: u.role === 'admin' ? '#1565c0' : '#7b1fa2',
+                        borderRadius: '12px',
+                        fontSize: '12px',
+                        fontWeight: 'bold'
+                      }}>
+                        {u.role}
+                      </span>
+                    </td>
+                    <td style={{ padding: '12px' }}>
+                      {u.id !== user.id && (
+                        <button 
+                          onClick={() => deleteUser(u.id)}
+                          style={{
+                            padding: '6px 12px',
+                            background: '#e74c3c',
+                            color: 'white',
+                            border: 'none',
+                            borderRadius: '4px',
+                            cursor: 'pointer'
+                          }}
+                        >
+                          Delete
+                        </button>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          ) : (
+            <p style={{ textAlign: 'center', color: '#7f8c8d', padding: '40px' }}>
+              No users found
+            </p>
+          )}
+        </div>
       )}
     </div>
   );
