@@ -9,7 +9,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 // Path to CSV file
-const csvFilePath = path.join(__dirname, '../../Library_Inventory/src/Inventory of Instructional Materials - Sheet1.csv');
+const csvFilePath = path.join(__dirname, './data/Inventory of Instructional Materials - Sheet1.csv');
 
 // Function to parse CSV
 function parseCSV(csvText) {

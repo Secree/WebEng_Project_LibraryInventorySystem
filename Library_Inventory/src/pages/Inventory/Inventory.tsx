@@ -1,27 +1,51 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { getAllResources } from '../../services/api';
 import styles from './Inventory.module.css';
-
-interface Resource {
-  id: string;
-  title: string;
-  type: string;
-  quantity: number;
-  suggestedTopics: string;
-  keywords: string;
-  pictureUrl: string;
-  status: string;
-}
+import SearchToolbar from '../../components/inventory/SearchToolbar';
+import ResourceGrid from '../../components/inventory/ResourceGrid';
+import CheckoutModal from '../../components/inventory/CheckoutModal';
+import CartOverviewModal from '../../components/inventory/CartOverviewModal';
+import type { Resource } from '../../components/inventory/types';
 
 interface InventoryProps {
   userRole?: string;
 }
 
+type FilterTab = 'All' | 'Books' | 'Modules' | 'Equipment';
+
+const FILTER_TABS: FilterTab[] = ['All', 'Books', 'Modules', 'Equipment'];
+
+const mapResourceToTab = (resource: Resource): Exclude<FilterTab, 'All'> => {
+  const type = resource.type.toLowerCase();
+
+  if (
+    type.includes('laboratory') ||
+    type.includes('equipment') ||
+    type.includes('measuring') ||
+    type.includes('weighing') ||
+    type.includes('safety') ||
+    type.includes('energy')
+  ) {
+    return 'Equipment';
+  }
+
+  if (type.includes('reading') || type.includes('learning') || type.includes('book')) {
+    return 'Books';
+  }
+
+  return 'Modules';
+};
+
 function Inventory({ userRole }: InventoryProps) {
   const [resources, setResources] = useState<Resource[]>([]);
-  const [filteredResources, setFilteredResources] = useState<Resource[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedType, setSelectedType] = useState('All');
+  const [selectedType, setSelectedType] = useState<FilterTab>('All');
+  const [isMultiSelectMode, setIsMultiSelectMode] = useState(false);
+  const [selectedResourceIds, setSelectedResourceIds] = useState<string[]>([]);
+  const [cartResourceIds, setCartResourceIds] = useState<string[]>([]);
+  const [checkoutResource, setCheckoutResource] = useState<Resource | null>(null);
+  const [isCheckoutModalOpen, setIsCheckoutModalOpen] = useState(false);
+  const [isCartModalOpen, setIsCartModalOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
@@ -30,17 +54,11 @@ function Inventory({ userRole }: InventoryProps) {
     fetchResources();
   }, []);
 
-  // Filter resources when search or type changes
-  useEffect(() => {
-    filterResources();
-  }, [searchQuery, selectedType, resources]);
-
   const fetchResources = async () => {
     setLoading(true);
     try {
       const data = await getAllResources();
       setResources(data);
-      setFilteredResources(data);
       setError('');
     } catch (err: any) {
       setError('Failed to load inventory. Please try again.');
@@ -50,13 +68,12 @@ function Inventory({ userRole }: InventoryProps) {
     }
   };
 
-  const filterResources = () => {
+  const searchMatchedResources = useMemo(() => {
     let filtered = [...resources];
 
-    // Filter by search query
     if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase();
-      filtered = filtered.filter(resource => 
+      filtered = filtered.filter((resource) =>
         resource.title.toLowerCase().includes(query) ||
         resource.type.toLowerCase().includes(query) ||
         resource.keywords.toLowerCase().includes(query) ||
@@ -64,23 +81,118 @@ function Inventory({ userRole }: InventoryProps) {
       );
     }
 
-    // Filter by type
-    if (selectedType !== 'All') {
-      filtered = filtered.filter(resource => resource.type === selectedType);
+    return filtered;
+  }, [resources, searchQuery]);
+
+  const filteredResources = useMemo(() => {
+    if (selectedType === 'All') {
+      return searchMatchedResources;
     }
 
-    setFilteredResources(filtered);
-  };
+    return searchMatchedResources.filter((resource) => mapResourceToTab(resource) === selectedType);
+  }, [searchMatchedResources, selectedType]);
 
-  // Get unique types for filter dropdown
-  const getUniqueTypes = () => {
-    const types = resources.map(r => r.type);
-    return ['All', ...Array.from(new Set(types)).sort()];
-  };
+  const typeCounts = useMemo(() => {
+    const counts: Record<FilterTab, number> = {
+      All: searchMatchedResources.length,
+      Books: 0,
+      Modules: 0,
+      Equipment: 0,
+    };
+
+    searchMatchedResources.forEach((resource) => {
+      const tab = mapResourceToTab(resource);
+      counts[tab] += 1;
+    });
+
+    return counts;
+  }, [searchMatchedResources]);
+
+  const cartResources = useMemo(() => {
+    const cartSet = new Set(cartResourceIds);
+    return resources.filter((resource) => cartSet.has(resource.id));
+  }, [resources, cartResourceIds]);
 
   const handleReserve = (resourceId: string) => {
-    // TODO: Implement reservation logic
-    alert(`Reservation feature coming soon for resource: ${resourceId}`);
+    const selectedResource = resources.find((resource) => resource.id === resourceId);
+    if (!selectedResource) return;
+
+    setCheckoutResource(selectedResource);
+    setIsCheckoutModalOpen(true);
+  };
+
+  const handleToggleMultiSelectMode = () => {
+    setIsMultiSelectMode((prev) => {
+      if (prev) {
+        setSelectedResourceIds([]);
+      }
+      return !prev;
+    });
+  };
+
+  const handleToggleResourceSelection = (resourceId: string) => {
+    setSelectedResourceIds((prev) =>
+      prev.includes(resourceId)
+        ? prev.filter((id) => id !== resourceId)
+        : [...prev, resourceId]
+    );
+  };
+
+  const handleCancelMultiSelect = () => {
+    setSelectedResourceIds([]);
+    setIsMultiSelectMode(false);
+  };
+
+  const handleAddToCart = () => {
+    if (selectedResourceIds.length === 0) {
+      return;
+    }
+
+    setCartResourceIds((prev) => Array.from(new Set([...prev, ...selectedResourceIds])));
+    setSelectedResourceIds([]);
+    setIsMultiSelectMode(false);
+    setIsCartModalOpen(true);
+  };
+
+  const handleCloseCheckoutModal = () => {
+    setIsCheckoutModalOpen(false);
+    setCheckoutResource(null);
+  };
+
+  const handleConfirmSingleCheckout = (resourceId: string) => {
+    alert(`Checkout submitted for resource: ${resourceId}`);
+    handleCloseCheckoutModal();
+  };
+
+  const handleRemoveFromCart = (resourceId: string) => {
+    setCartResourceIds((prev) => prev.filter((id) => id !== resourceId));
+  };
+
+  const handleAddMoreMaterials = () => {
+    setIsCartModalOpen(false);
+    setIsMultiSelectMode(true);
+  };
+
+  const handleCheckoutAll = () => {
+    const availableItems = cartResources.filter(
+      (item) => item.status === 'available' && item.quantity > 0
+    );
+
+    if (availableItems.length === 0) {
+      alert('No available materials to checkout.');
+      return;
+    }
+
+    alert(`Checkout submitted for ${availableItems.length} item(s).`);
+    setCartResourceIds((prev) =>
+      prev.filter((id) => !availableItems.some((item) => item.id === id))
+    );
+    setIsCartModalOpen(false);
+  };
+
+  const clearFilters = () => {
+    setSearchQuery('');
+    setSelectedType('All');
   };
 
   if (loading) {
@@ -98,115 +210,50 @@ function Inventory({ userRole }: InventoryProps) {
         <p className={styles.subtitle}>Browse and search instructional materials</p>
       </div>
 
-      {/* Search and Filter Section */}
-      <div className={styles.searchSection}>
-        <div className={styles.searchBar}>
-          <input
-            type="text"
-            placeholder="🔍 Search by title, keywords, or topics..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className={styles.searchInput}
-          />
-        </div>
-        
-        <div className={styles.filterBar}>
-          <label htmlFor="typeFilter">Filter by Type:</label>
-          <select
-            id="typeFilter"
-            value={selectedType}
-            onChange={(e) => setSelectedType(e.target.value)}
-            className={styles.filterSelect}
-          >
-            {getUniqueTypes().map(type => (
-              <option key={type} value={type}>{type}</option>
-            ))}
-          </select>
-        </div>
-
-        <div className={styles.resultsCount}>
-          Showing {filteredResources.length} of {resources.length} items
-        </div>
-      </div>
+      <SearchToolbar
+        searchQuery={searchQuery}
+        selectedType={selectedType}
+        types={FILTER_TABS}
+        typeCounts={typeCounts}
+        filteredCount={filteredResources.length}
+        totalCount={resources.length}
+        showMultiSelectControls={userRole === 'user'}
+        isMultiSelectMode={isMultiSelectMode}
+        selectedCount={selectedResourceIds.length}
+        onSearchChange={setSearchQuery}
+        onTypeChange={(value) => setSelectedType(value as FilterTab)}
+        onToggleMultiSelectMode={handleToggleMultiSelectMode}
+        onAddToCart={handleAddToCart}
+        onCancelMultiSelect={handleCancelMultiSelect}
+      />
 
       {error && <div className={styles.error}>{error}</div>}
 
-      {/* Resources Grid */}
-      <div className={styles.resourcesGrid}>
-        {filteredResources.length === 0 ? (
-          <div className={styles.noResults}>
-            <p>No materials found matching your search.</p>
-            <button onClick={() => { setSearchQuery(''); setSelectedType('All'); }}>
-              Clear Filters
-            </button>
-          </div>
-        ) : (
-          filteredResources.map((resource) => (
-            <div key={resource.id} className={styles.resourceCard}>
-              <div className={styles.cardHeader}>
-                <h3 className={styles.resourceTitle}>{resource.title}</h3>
-                <span className={`${styles.typeBadge} ${styles[resource.type.replace(/\s+/g, '')]}`}>
-                  {resource.type}
-                </span>
-              </div>
+      <ResourceGrid
+        resources={filteredResources}
+        userRole={userRole}
+        isMultiSelectMode={isMultiSelectMode}
+        selectedResourceIds={selectedResourceIds}
+        onReserve={handleReserve}
+        onToggleResourceSelection={handleToggleResourceSelection}
+        onClearFilters={clearFilters}
+      />
 
-              <div className={styles.cardBody}>
-                <div className={styles.infoRow}>
-                  <span className={styles.label}>Quantity:</span>
-                  <span className={styles.value}>
-                    {resource.quantity} {resource.quantity === 1 ? 'item' : 'items'}
-                  </span>
-                </div>
+      <CheckoutModal
+        isOpen={isCheckoutModalOpen}
+        resource={checkoutResource}
+        onClose={handleCloseCheckoutModal}
+        onConfirm={handleConfirmSingleCheckout}
+      />
 
-                <div className={styles.infoRow}>
-                  <span className={styles.label}>Status:</span>
-                  <span className={`${styles.status} ${styles[resource.status]}`}>
-                    {resource.status === 'available' ? '✓ Available' : '⚠ Reserved'}
-                  </span>
-                </div>
-
-                {resource.suggestedTopics && (
-                  <div className={styles.topics}>
-                    <span className={styles.label}>Topics:</span>
-                    <p className={styles.topicsText}>
-                      {resource.suggestedTopics.split('\n').slice(0, 3).join(', ')}
-                      {resource.suggestedTopics.split('\n').length > 3 && '...'}
-                    </p>
-                  </div>
-                )}
-
-                {resource.keywords && (
-                  <div className={styles.keywords}>
-                    <span className={styles.label}>Keywords:</span>
-                    <div className={styles.keywordTags}>
-                      {resource.keywords.split('\n')
-                        .filter(k => k.trim())
-                        .slice(0, 4)
-                        .map((keyword, idx) => (
-                          <span key={idx} className={styles.keywordTag}>
-                            {keyword.trim()}
-                          </span>
-                        ))}
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              {userRole === 'user' && (
-                <div className={styles.cardFooter}>
-                  <button 
-                    className={styles.reserveButton}
-                    onClick={() => handleReserve(resource.id)}
-                    disabled={resource.status !== 'available' || resource.quantity === 0}
-                  >
-                    {resource.status === 'available' ? 'Reserve Item' : 'Not Available'}
-                  </button>
-                </div>
-              )}
-            </div>
-          ))
-        )}
-      </div>
+      <CartOverviewModal
+        isOpen={isCartModalOpen}
+        cartResources={cartResources}
+        onClose={() => setIsCartModalOpen(false)}
+        onRemoveItem={handleRemoveFromCart}
+        onAddMore={handleAddMoreMaterials}
+        onCheckoutAll={handleCheckoutAll}
+      />
     </div>
   );
 }
