@@ -24,7 +24,9 @@ function UserDashboard({ user, onLogout }: UserDashboardProps) {
           </button>          
         </div>
       </div>
-      <Inventory userRole="user" />
+      <div className={styles.body}>
+        <Inventory userRole="user" />
+      </div>
     </div>
   );
 }
