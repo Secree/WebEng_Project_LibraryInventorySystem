@@ -93,3 +93,22 @@
 .loginLink:hover {
   text-decoration: underline;
 }
+
+@media (max-width: 500px) {
+  .logo {
+    width: 70px;
+  }
+  .container {
+    width: auto;
+    margin: auto;
+  }
+  .label {
+    font-size: smaller;
+  }
+  @media (max-height: 800px) {
+    .container {
+      margin: 20px;
+      padding-top: 5px;
+    }
+  }
+}

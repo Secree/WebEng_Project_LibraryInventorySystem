@@ -1,0 +1,114 @@
+.searchContainer {
+    display: flex;
+    justify-content: center;
+}
+
+.searchSection {
+    width: 50%;
+    background: #f8f9fa;
+    padding: 20px;
+    border-radius: 10px;
+    margin-bottom: 30px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.searchBar {
+    display: flex;
+    justify-content: center;
+    width: 100%;
+    margin-bottom: 15px;
+}
+
+.searchInput {
+    width: 100%;
+    padding: 12px 20px;
+    font-size: 16px;
+    border: 2px solid #ddd;
+    border-radius: 8px;
+    transition: border-color 0.3s;
+}
+
+.searchInput:focus {
+  outline: none;
+  border-color: #3498db;
+}
+
+@media (max-width: 1000px) {
+    .searchInput {
+        width: 100%;
+    }
+}
+
+.filterBar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.typeTabs {
+  display: flex;
+  gap: 10px;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  padding: 4px;
+  border: 1px solid #d6dee7;
+  border-radius: 12px;
+  background: white;
+}
+
+.typeTab {
+  border: none;
+  background: transparent;
+  color: #2c3e50;
+  padding: 10px 16px;
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: 14px;
+  white-space: nowrap;
+}
+
+.activeTypeTab {
+  background: #2f66d8;
+  color: white;
+}
+
+.toolbarActions {
+  margin-left: 0;
+  display: flex;
+  gap: 10px;
+}
+
+.multiSelectButton,
+.cartButton,
+.cancelButton {
+  padding: 8px 14px;
+  border-radius: 6px;
+  border: 1px solid #cfd8e3;
+  background: white;
+  color: #2c3e50;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.cartButton {
+  background: #e3f2fd;
+  color: #1565c0;
+}
+
+.cartButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.cancelButton {
+  background: #3498db;
+  color: white;
+  border-color: #3498db;
+}
+
+.resultsCount {
+  color: #7f8c8d;
+  font-size: 14px;
+  font-style: italic;
+}

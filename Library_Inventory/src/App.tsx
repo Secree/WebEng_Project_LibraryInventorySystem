@@ -5,8 +5,8 @@ import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 // pages
 import Login from './pages/Login/Login';
 import Register from './pages/Register/Register';
-import AdminDashboard from './pages/AdminDashboard';
-import UserDashboard from './pages/UserDashboard';
+import AdminDashboard from './pages/AdminDashboard/AdminDashboard';
+import UserDashboard from './pages/UserDashboard/UserDashboard';
 
 type User = {
   id: string;

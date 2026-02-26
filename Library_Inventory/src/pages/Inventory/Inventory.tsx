@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { getAllResources } from '../../services/api';
 import styles from './Inventory.module.css';
-import SearchToolbar from '../../components/inventory/SearchToolbar';
+import SearchToolbar from '../../components/inventory/SearchToolbar/SearchToolbar';
 import ResourceGrid from '../../components/inventory/ResourceGrid';
 import CheckoutModal from '../../components/inventory/CheckoutModal';
 import CartOverviewModal from '../../components/inventory/CartOverviewModal';
@@ -198,7 +198,9 @@ function Inventory({ userRole }: InventoryProps) {
   if (loading) {
     return (
       <div className={styles.container}>
-        <div className={styles.loading}>Loading inventory...</div>
+        <div className={styles.loading}>
+          Loading inventory...
+        </div>
       </div>
     );
   }
@@ -206,8 +208,8 @@ function Inventory({ userRole }: InventoryProps) {
   return (
     <div className={styles.container}>
       <div className={styles.header}>
-        <h1>📚 Library Inventory</h1>
-        <p className={styles.subtitle}>Browse and search instructional materials</p>
+        <h1>📚 Find Your Resources</h1>
+        <p className={styles.subtitle}>Search through our collection of books, modules, and equipment</p>
       </div>
 
       <SearchToolbar
