@@ -1,16 +1,16 @@
 // Reservation service
-const { db } = require('../config/firebase');
+import Reservation from '../models/Reservation.js';
 
 const reservationService = {
   // Get all reservations
   getAllReservations: async () => {
     try {
-      const snapshot = await db.collection('reservations').get();
-      const reservations = [];
-      snapshot.forEach(doc => {
-        reservations.push({ id: doc.id, ...doc.data() });
-      });
-      return reservations;
+      const reservations = await Reservation.find({}).lean();
+      return reservations.map(res => ({
+        id: res._id.toString(),
+        ...res,
+        _id: undefined
+      }));
     } catch (error) {
       throw new Error(`Failed to fetch reservations: ${error.message}`);
     }
@@ -19,11 +19,11 @@ const reservationService = {
   // Get reservation by ID
   getReservationById: async (id) => {
     try {
-      const doc = await db.collection('reservations').doc(id).get();
-      if (!doc.exists) {
+      const reservation = await Reservation.findById(id).lean();
+      if (!reservation) {
         throw new Error('Reservation not found');
       }
-      return { id: doc.id, ...doc.data() };
+      return { id: reservation._id.toString(), ...reservation, _id: undefined };
     } catch (error) {
       throw new Error(`Failed to fetch reservation: ${error.message}`);
     }
@@ -32,12 +32,16 @@ const reservationService = {
   // Create new reservation
   createReservation: async (reservationData) => {
     try {
-      const docRef = await db.collection('reservations').add({
+      const reservation = new Reservation({
         ...reservationData,
-        createdAt: new Date().toISOString(),
         status: 'pending'
       });
-      return { id: docRef.id, ...reservationData };
+      await reservation.save();
+      return { 
+        id: reservation._id.toString(), 
+        ...reservation.toObject(),
+        _id: undefined
+      };
     } catch (error) {
       throw new Error(`Failed to create reservation: ${error.message}`);
     }
@@ -46,11 +50,17 @@ const reservationService = {
   // Update reservation
   updateReservation: async (id, reservationData) => {
     try {
-      await db.collection('reservations').doc(id).update({
-        ...reservationData,
-        updatedAt: new Date().toISOString()
-      });
-      return { id, ...reservationData };
+      const reservation = await Reservation.findByIdAndUpdate(
+        id,
+        reservationData,
+        { new: true, runValidators: true }
+      ).lean();
+      
+      if (!reservation) {
+        throw new Error('Reservation not found');
+      }
+      
+      return { id: reservation._id.toString(), ...reservation, _id: undefined };
     } catch (error) {
       throw new Error(`Failed to update reservation: ${error.message}`);
     }
@@ -59,7 +69,10 @@ const reservationService = {
   // Delete reservation
   deleteReservation: async (id) => {
     try {
-      await db.collection('reservations').doc(id).delete();
+      const result = await Reservation.findByIdAndDelete(id);
+      if (!result) {
+        throw new Error('Reservation not found');
+      }
       return true;
     } catch (error) {
       throw new Error(`Failed to delete reservation: ${error.message}`);
@@ -67,4 +80,4 @@ const reservationService = {
   }
 };
 
-module.exports = reservationService;
+export default reservationService;
