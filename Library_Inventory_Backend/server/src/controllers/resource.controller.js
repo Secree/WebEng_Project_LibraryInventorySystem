@@ -1,5 +1,5 @@
 // Resource controller
-const resourceService = require('../services/resource.service');
+import resourceService from '../services/resource.service.js';
 
 const resourceController = {
   // Get all resources
@@ -50,7 +50,24 @@ const resourceController = {
     } catch (error) {
       res.status(400).json({ error: error.message });
     }
+  },
+
+  // Bulk create resources
+  bulkCreateResources: async (req, res) => {
+    try {
+      const { resources } = req.body;
+      if (!Array.isArray(resources)) {
+        return res.status(400).json({ error: 'Resources must be an array' });
+      }
+      const createdResources = await resourceService.bulkCreateResources(resources);
+      res.status(201).json({ 
+        message: `Successfully created ${createdResources.length} resources`,
+        resources: createdResources 
+      });
+    } catch (error) {
+      res.status(400).json({ error: error.message });
+    }
   }
 };
 
-module.exports = resourceController;
+export default resourceController;
