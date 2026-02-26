@@ -1,0 +1,76 @@
+.main {
+    width: 100vw;
+}
+
+.main .body {
+    min-height: 90vh;
+}
+
+.header {
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    height: 75px;
+    padding: 10px;
+    color: white;
+    background: #2563EB;
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+    box-shadow: 0 6px 20px rgba(37, 99, 235, 0.2);
+}
+
+.headerLogo {
+    display: flex;
+    align-items: center;
+}
+
+.logo {
+    display: block;
+    width: 70px;
+    height: 70px;
+    border-radius: 5px;
+    background-color: #E2E8F0;
+}
+
+.headerName h2,
+.headerName p {
+    margin: 0px;
+    padding-left: 10px;
+}
+
+/* inventoryManagement, userManagement & logout (BTNs) */
+
+.logoutBTN,
+.inventoryManagement,
+.userManagement {
+    padding: 10px 20px;
+    margin: 0 5px 0 5px;
+    background: white;
+    color: black;
+    border: 2px solid #E2E8F0;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: ease 0.3s;
+}
+
+.logoutBTN:hover,
+.inventoryManagement:hover,
+.userManagement:hover {
+    background: #E2E8F0;
+    color: #000000;
+    border: 2px solid #ffffff;
+}
+
+.inventoryManagement.active,
+.userManagement.active {
+    background: #2563EB;
+    color: white;
+    border: 2px solid #ffffff;
+}
+
+.inventoryManagement.active:hover,
+.userManagement.active:hover {
+    background: #1d4ed8;
+}
