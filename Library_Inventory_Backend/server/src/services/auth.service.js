@@ -1,5 +1,5 @@
 // Authentication service
-import { admin, db } from '../config/firebase.js';
+import User from '../models/User.js';
 import jwt from 'jsonwebtoken';
 
 const authService = {
@@ -14,27 +14,31 @@ const authService = {
 
     try {
       // Check if user already exists
-      const usersRef = db.collection('users');
-      const existingUser = await usersRef.where('email', '==', email).get();
+      const existingUser = await User.findOne({ email: email.toLowerCase() });
       
-      if (!existingUser.empty) {
+      if (existingUser) {
         throw new Error('User already exists');
       }
 
-      // Create new user
-      const newUser = {
-        name,
-        email,
-        password, // In production, hash this password!
-        role: role === 'admin' ? 'admin' : 'user',
-        createdAt: admin.firestore.FieldValue.serverTimestamp()
-      };
+      // Split name into first and last name
+      const nameParts = name.trim().split(' ');
+      const firstName = nameParts[0];
+      const lastName = nameParts.slice(1).join(' ') || nameParts[0];
 
-      const docRef = await usersRef.add(newUser);
+      // Create new user
+      const newUser = new User({
+        firstName,
+        lastName,
+        email: email.toLowerCase(),
+        password, // In production, hash this password!
+        role: role === 'admin' ? 'admin' : 'user'
+      });
+
+      await newUser.save();
 
       const returnedUser = {
-        id: docRef.id,
-        name: newUser.name,
+        id: newUser._id.toString(),
+        name: newUser.firstName + ' ' + newUser.lastName,
         email: newUser.email,
         role: newUser.role
       };
@@ -62,24 +66,20 @@ const authService = {
 
     try {
       // Find user
-      const usersRef = db.collection('users');
-      const snapshot = await usersRef
-        .where('email', '==', email)
-        .where('password', '==', password)
-        .get();
+      const user = await User.findOne({ 
+        email: email.toLowerCase(),
+        password: password // In production, use bcrypt.compare()
+      });
 
-      if (snapshot.empty) {
+      if (!user) {
         throw new Error('Invalid email or password');
       }
 
-      const userDoc = snapshot.docs[0];
-      const userData = userDoc.data();
-
       const returnedUser = {
-        id: userDoc.id,
-        name: userData.name,
-        email: userData.email,
-        role: userData.role || 'user'
+        id: user._id.toString(),
+        name: user.firstName + ' ' + user.lastName,
+        email: user.email,
+        role: user.role || 'user'
       };
 
       const token = jwt.sign(

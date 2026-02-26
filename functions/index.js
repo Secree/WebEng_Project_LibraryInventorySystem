@@ -1,24 +1,17 @@
+import functions from 'firebase-functions';
 import express from 'express';
 import cors from 'cors';
-import dotenv from 'dotenv';
 import cookieParser from 'cookie-parser';
-import connectDB from './server/src/config/mongodb.js';
 import authRoutes from './server/src/routes/auth.routes.js';
 import userRoutes from './server/src/routes/user.routes.js';
 import resourceRoutes from './server/src/routes/resource.routes.js';
 
-dotenv.config();
-
-// Connect to MongoDB
-connectDB();
-
 const app = express();
-const PORT = process.env.PORT || 3000;
 
 // Middleware
 app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:5173',
-  credentials: true  // Allow credentials (cookies)
+  origin: true,  // Allow all origins in Cloud Functions
+  credentials: true
 }));
 app.use(express.json());
 app.use(cookieParser());
@@ -30,9 +23,8 @@ app.use('/api/resources', resourceRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {
-  res.json({ status: 'ok', message: 'Server is running with MongoDB' });
+  res.json({ status: 'ok', message: 'Server is running on Firebase Functions' });
 });
 
-app.listen(PORT, () => {
-  console.log(`Server is running on http://localhost:${PORT}`);
-});
+// Export the Express app as a Cloud Function
+export const api = functions.https.onRequest(app);
