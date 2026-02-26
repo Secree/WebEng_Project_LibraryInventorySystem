@@ -1,25 +1,19 @@
 // User service
-import { db } from '../config/firebase.js';
+import User from '../models/User.js';
 
 const userService = {
   // Get all users
   getAllUsers: async () => {
     try {
-      const usersRef = db.collection('users');
-      const snapshot = await usersRef.get();
+      const users = await User.find({}, '-password').lean();
       
-      const users = [];
-      snapshot.forEach(doc => {
-        const data = doc.data();
-        users.push({
-          id: doc.id,
-          name: data.name,
-          email: data.email,
-          role: data.role
-        });
-      });
-
-      return users;
+      return users.map(user => ({
+        id: user._id.toString(),
+        name: `${user.firstName} ${user.lastName}`,
+        email: user.email,
+        role: user.role,
+        _id: undefined
+      }));
     } catch (error) {
       throw new Error(`Failed to fetch users: ${error.message}`);
     }
@@ -28,16 +22,17 @@ const userService = {
   // Get user by ID
   getUserById: async (id) => {
     try {
-      const doc = await db.collection('users').doc(id).get();
-      if (!doc.exists) {
+      const user = await User.findById(id, '-password').lean();
+      if (!user) {
         throw new Error('User not found');
       }
-      const data = doc.data();
+      
       return {
-        id: doc.id,
-        name: data.name,
-        email: data.email,
-        role: data.role
+        id: user._id.toString(),
+        name: `${user.firstName} ${user.lastName}`,
+        email: user.email,
+        role: user.role,
+        _id: undefined
       };
     } catch (error) {
       throw new Error(`Failed to fetch user: ${error.message}`);
@@ -51,7 +46,10 @@ const userService = {
         throw new Error('User ID required');
       }
 
-      await db.collection('users').doc(id).delete();
+      const result = await User.findByIdAndDelete(id);
+      if (!result) {
+        throw new Error('User not found');
+      }
       
       return true;
     } catch (error) {

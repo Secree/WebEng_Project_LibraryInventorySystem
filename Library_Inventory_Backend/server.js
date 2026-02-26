@@ -2,11 +2,15 @@ import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import cookieParser from 'cookie-parser';
+import connectDB from './server/src/config/mongodb.js';
 import authRoutes from './server/src/routes/auth.routes.js';
 import userRoutes from './server/src/routes/user.routes.js';
 import resourceRoutes from './server/src/routes/resource.routes.js';
 
 dotenv.config();
+
+// Connect to MongoDB
+connectDB();
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -26,7 +30,7 @@ app.use('/api/resources', resourceRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {
-  res.json({ status: 'ok', message: 'Server is running' });
+  res.json({ status: 'ok', message: 'Server is running with MongoDB' });
 });
 
 app.listen(PORT, () => {
