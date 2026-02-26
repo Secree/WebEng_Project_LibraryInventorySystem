@@ -1,5 +1,5 @@
 // Role-based access control middleware
-import { db } from '../config/firebase.js';
+import User from '../models/User.js';
 
 const roleMiddleware = {
   // Check if user is admin
@@ -11,19 +11,17 @@ const roleMiddleware = {
         return res.status(401).json({ message: 'User ID required' });
       }
 
-      const userDoc = await db.collection('users').doc(userId).get();
+      const user = await User.findById(userId).lean();
       
-      if (!userDoc.exists) {
+      if (!user) {
         return res.status(404).json({ message: 'User not found' });
       }
-
-      const userData = userDoc.data();
       
-      if (userData.role !== 'admin') {
+      if (user.role !== 'admin') {
         return res.status(403).json({ message: 'Access denied. Admin only.' });
       }
 
-      req.user = { id: userDoc.id, ...userData };
+      req.user = { id: user._id.toString(), ...user };
       next();
     } catch (error) {
       console.error('Admin verification error:', error);

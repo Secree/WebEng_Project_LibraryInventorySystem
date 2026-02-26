@@ -12,12 +12,28 @@ dotenv.config();
 
 // Initialize Firebase Admin SDK
 let serviceAccount;
-const envPath = path.join(__dirname, '../../../.env');
-const envContent = fs.readFileSync(envPath, 'utf8');
-const match = envContent.match(/FIREBASE_SERVICE_ACCOUNT=({[\s\S]*?})\s*$/m);
-if (match) {
-  serviceAccount = JSON.parse(match[1]);
-} else {
+
+// Try to read from .env file (for local development)
+// In production (Render), use environment variables directly
+try {
+  const envPath = path.join(__dirname, '../../../.env');
+  
+  if (fs.existsSync(envPath)) {
+    // Local development - read from .env file
+    const envContent = fs.readFileSync(envPath, 'utf8');
+    const match = envContent.match(/FIREBASE_SERVICE_ACCOUNT=({[\s\S]*?})\s*$/m);
+    if (match) {
+      serviceAccount = JSON.parse(match[1]);
+    } else {
+      serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
+    }
+  } else {
+    // Production - use environment variable directly
+    serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
+  }
+} catch (error) {
+  // Fallback to environment variable if file reading fails
+  console.log('Reading service account from environment variable');
   serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
 }
 
