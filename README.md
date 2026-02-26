@@ -1,6 +1,6 @@
-# Library Inventory System
+# Resource Inventory System
 
-A web-based library inventory management system with role-based access control (Admin and User).
+A web-based Resource inventory management system with role-based access control (Admin and User).
 
 ## Features
 
