@@ -38,26 +38,18 @@ function parseCSV(csvText) {
     const keywords = record['Keywords for Search']?.trim() || '';
     const pictureUrl = record['Picture of Materials']?.trim() || '';
     
-    // Map type to Resource model enum
-    let resourceType = 'other';
-    const typeLower = typeOfMaterial.toLowerCase();
-    if (typeLower.includes('book')) resourceType = 'book';
-    else if (typeLower.includes('journal')) resourceType = 'journal';
-    else if (typeLower.includes('magazine')) resourceType = 'magazine';
-    else if (typeLower.includes('digital')) resourceType = 'digital';
-
     const resource = {
       title: title,
-      author: '', // Not provided in CSV
-      category: typeOfMaterial, // Use type of material as category
-      type: resourceType,
+      author: '',
+      category: typeOfMaterial,
+      type: 'other',
       quantity: quantity,
-      availableQuantity: quantity, // Initially all are available
+      availableQuantity: quantity,
       description: suggestedTopics || 'No description available',
       suggestedTopics: suggestedTopics,
       keywords: keywords,
+      imageUrl: pictureUrl,
       pictureUrl: pictureUrl,
-      imageUrl: pictureUrl, // Same as pictureUrl for compatibility
       status: 'available'
     };
 
@@ -73,7 +65,6 @@ async function bulkInsert(resources, batchSize = 1000) {
   
   let totalInserted = 0;
   
-  // Insert in batches for better performance
   for (let i = 0; i < resources.length; i += batchSize) {
     const chunk = resources.slice(i, i + batchSize);
     
@@ -96,17 +87,8 @@ async function main() {
   try {
     // Connect to MongoDB
     console.log('🔌 Connecting to MongoDB...');
-    await mongoose.connect(process.env.MONGODB_URI, {
-      dbName: 'library_inventory'
-    });
+    await mongoose.connect(process.env.MONGODB_URI);
     console.log(`✅ Connected to MongoDB: ${mongoose.connection.name}`);
-    
-    // Verify we're NOT using the test database
-    if (mongoose.connection.name === 'test') {
-      console.error('❌ ERROR: Connected to "test" database instead of "library_inventory"!');
-      await mongoose.connection.close();
-      process.exit(1);
-    }
     
     console.log('📖 Reading CSV file...');
     const csvText = fs.readFileSync(csvFilePath, 'utf-8');
@@ -139,7 +121,7 @@ async function main() {
     try {
       await mongoose.connection.close();
     } catch (closeError) {
-      // Ignore close errors
+      // Ignore
     }
     process.exit(1);
   }
@@ -148,3 +130,5 @@ async function main() {
 // Run the script
 main();
 
+// Run the script
+main();

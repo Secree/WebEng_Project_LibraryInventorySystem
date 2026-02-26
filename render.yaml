@@ -14,7 +14,9 @@ services:
         value: 3000
       - key: FRONTEND_URL
         sync: false
-      - key: MONGODB_URI
+      - key: FIREBASE_SERVICE_ACCOUNT
+        sync: false
+      - key: FIREBASE_DATABASE_URL
         sync: false
       - key: JWT_SECRET
         sync: false
