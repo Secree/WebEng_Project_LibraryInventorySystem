@@ -9,10 +9,17 @@ import resourceRoutes from './server/src/routes/resource.routes.js';
 
 dotenv.config();
 
-// Connect to MongoDB
-connectDB();
+// Log environment check
+console.log('Environment variables loaded');
+console.log('MongoDB URI configured:', !!process.env.MONGODB_URI);
+console.log('JWT Secret configured:', !!process.env.JWT_SECRET);
 
 const app = express();
+
+// Connect to MongoDB (non-blocking)
+connectDB().catch(err => {
+  console.error('Failed to connect to MongoDB:', err.message);
+});
 const PORT = process.env.PORT || 3000;
 
 // Middleware

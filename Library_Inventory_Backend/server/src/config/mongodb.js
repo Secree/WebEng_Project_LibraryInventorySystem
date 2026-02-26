@@ -7,12 +7,16 @@ const connectDB = async () => {
   try {
     const mongoURI = process.env.MONGODB_URI || 'mongodb://localhost:27017/library_inventory';
     
+    console.log('Attempting to connect to MongoDB...');
+    console.log('MongoDB URI exists:', !!process.env.MONGODB_URI);
+    
     await mongoose.connect(mongoURI);
     
     console.log('MongoDB connected successfully');
   } catch (error) {
-    console.error('MongoDB connection error:', error);
-    process.exit(1);
+    console.error('MongoDB connection error:', error.message);
+    console.error('Server will continue running, but database operations will fail');
+    // Don't exit - let the server start anyway
   }
 };
 
