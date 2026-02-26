@@ -38,9 +38,8 @@ const userSchema = new mongoose.Schema({
 });
 
 // Update timestamp on save
-userSchema.pre('save', function(next) {
+userSchema.pre('save', async function() {
   this.updatedAt = Date.now();
-  next();
 });
 
 export default mongoose.model('User', userSchema);
