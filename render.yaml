@@ -1,0 +1,22 @@
+services:
+  - type: web
+    name: library-inventory-backend
+    env: node
+    region: oregon
+    plan: free
+    branch: main
+    buildCommand: cd Library_Inventory_Backend && npm install
+    startCommand: cd Library_Inventory_Backend && node server.js
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 3000
+      - key: FRONTEND_URL
+        sync: false
+      - key: FIREBASE_SERVICE_ACCOUNT
+        sync: false
+      - key: FIREBASE_DATABASE_URL
+        sync: false
+      - key: JWT_SECRET
+        sync: false
