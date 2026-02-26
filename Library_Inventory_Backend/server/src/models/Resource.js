@@ -50,7 +50,18 @@ const resourceSchema = new mongoose.Schema({
   description: {
     type: String
   },
+  suggestedTopics: {
+    type: String,
+    default: ''
+  },
+  keywords: {
+    type: String,
+    default: ''
+  },
   imageUrl: {
+    type: String
+  },
+  pictureUrl: {
     type: String
   },
   status: {
@@ -74,7 +85,18 @@ resourceSchema.pre('save', function(next) {
   next();
 });
 
+// Transform _id to id when converting to JSON
+resourceSchema.set('toJSON', {
+  virtuals: true,
+  transform: function(doc, ret) {
+    ret.id = ret._id.toString();
+    delete ret._id;
+    delete ret.__v;
+    return ret;
+  }
+});
+
 // Index for search
-resourceSchema.index({ title: 'text', author: 'text', category: 'text' });
+resourceSchema.index({ title: 'text', author: 'text', category: 'text', keywords: 'text', suggestedTopics: 'text' });
 
 export default mongoose.model('Resource', resourceSchema);

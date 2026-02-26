@@ -5,12 +5,8 @@ const resourceService = {
   // Get all resources
   getAllResources: async () => {
     try {
-      const resources = await Resource.find({}).lean();
-      return resources.map(resource => ({
-        id: resource._id.toString(),
-        ...resource,
-        _id: undefined
-      }));
+      const resources = await Resource.find({});
+      return resources.map(resource => resource.toJSON());
     } catch (error) {
       throw new Error(`Failed to fetch resources: ${error.message}`);
     }
@@ -19,11 +15,11 @@ const resourceService = {
   // Get resource by ID
   getResourceById: async (id) => {
     try {
-      const resource = await Resource.findById(id).lean();
+      const resource = await Resource.findById(id);
       if (!resource) {
         throw new Error('Resource not found');
       }
-      return { id: resource._id.toString(), ...resource, _id: undefined };
+      return resource.toJSON();
     } catch (error) {
       throw new Error(`Failed to fetch resource: ${error.message}`);
     }
@@ -34,11 +30,7 @@ const resourceService = {
     try {
       const resource = new Resource(resourceData);
       await resource.save();
-      return { 
-        id: resource._id.toString(), 
-        ...resource.toObject(),
-        _id: undefined
-      };
+      return resource.toJSON();
     } catch (error) {
       throw new Error(`Failed to create resource: ${error.message}`);
     }
@@ -51,13 +43,13 @@ const resourceService = {
         id,
         resourceData,
         { new: true, runValidators: true }
-      ).lean();
+      );
       
       if (!resource) {
         throw new Error('Resource not found');
       }
       
-      return { id: resource._id.toString(), ...resource, _id: undefined };
+      return resource.toJSON();
     } catch (error) {
       throw new Error(`Failed to update resource: ${error.message}`);
     }
@@ -80,11 +72,7 @@ const resourceService = {
   bulkCreateResources: async (resourcesArray) => {
     try {
       const resources = await Resource.insertMany(resourcesArray);
-      return resources.map(resource => ({
-        id: resource._id.toString(),
-        ...resource.toObject(),
-        _id: undefined
-      }));
+      return resources.map(resource => resource.toJSON());
     } catch (error) {
       throw new Error(`Failed to bulk create resources: ${error.message}`);
     }

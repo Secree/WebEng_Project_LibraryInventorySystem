@@ -3,7 +3,11 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { parse } from 'csv-parse/sync';
-import { db } from '../server/src/config/firebase.js';
+import mongoose from 'mongoose';
+import dotenv from 'dotenv';
+import Resource from '../server/src/models/Resource.js';
+
+dotenv.config();
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -28,15 +32,33 @@ function parseCSV(csvText) {
     const title = record['Title/Name of Instructional Material']?.trim();
     if (!title) continue; // Skip if no title
 
+    const typeOfMaterial = record['Type of Material']?.trim() || 'Other';
+    const quantity = parseInt(record['Number of Copies/ Quantity']?.trim()) || 1;
+    const suggestedTopics = record['Suggested Topics for Usage']?.trim() || '';
+    const keywords = record['Keywords for Search']?.trim() || '';
+    const pictureUrl = record['Picture of Materials']?.trim() || '';
+    
+    // Map type to Resource model enum
+    let resourceType = 'other';
+    const typeLower = typeOfMaterial.toLowerCase();
+    if (typeLower.includes('book')) resourceType = 'book';
+    else if (typeLower.includes('journal')) resourceType = 'journal';
+    else if (typeLower.includes('magazine')) resourceType = 'magazine';
+    else if (typeLower.includes('digital')) resourceType = 'digital';
+
     const resource = {
       title: title,
-      type: record['Type of Material']?.trim() || 'Unknown',
-      quantity: parseInt(record['Number of Copies/ Quantity']?.trim()) || 0,
-      suggestedTopics: record['Suggested Topics for Usage']?.trim() || '',
-      keywords: record['Keywords for Search']?.trim() || '',
-      pictureUrl: record['Picture of Materials']?.trim() || '',
-      status: 'available',
-      createdAt: new Date().toISOString()
+      author: '', // Not provided in CSV
+      category: typeOfMaterial, // Use type of material as category
+      type: resourceType,
+      quantity: quantity,
+      availableQuantity: quantity, // Initially all are available
+      description: suggestedTopics || 'No description available',
+      suggestedTopics: suggestedTopics,
+      keywords: keywords,
+      pictureUrl: pictureUrl,
+      imageUrl: pictureUrl, // Same as pictureUrl for compatibility
+      status: 'available'
     };
 
     resources.push(resource);
@@ -45,24 +67,18 @@ function parseCSV(csvText) {
   return resources;
 }
 
-// Function to bulk insert into Firebase
-async function bulkInsert(resources, batchSize = 500) {
+// Function to bulk insert into MongoDB
+async function bulkInsert(resources, batchSize = 1000) {
   console.log(`Starting bulk insert of ${resources.length} resources...`);
   
   let totalInserted = 0;
   
-  // Firestore has a limit of 500 operations per batch
+  // Insert in batches for better performance
   for (let i = 0; i < resources.length; i += batchSize) {
-    const batch = db.batch();
     const chunk = resources.slice(i, i + batchSize);
     
-    chunk.forEach(resource => {
-      const docRef = db.collection('resources').doc();
-      batch.set(docRef, resource);
-    });
-    
     try {
-      await batch.commit();
+      await Resource.insertMany(chunk, { ordered: false });
       totalInserted += chunk.length;
       console.log(`Inserted ${totalInserted}/${resources.length} resources...`);
     } catch (error) {
@@ -78,6 +94,20 @@ async function bulkInsert(resources, batchSize = 500) {
 // Main execution
 async function main() {
   try {
+    // Connect to MongoDB
+    console.log('🔌 Connecting to MongoDB...');
+    await mongoose.connect(process.env.MONGODB_URI, {
+      dbName: 'library_inventory'
+    });
+    console.log(`✅ Connected to MongoDB: ${mongoose.connection.name}`);
+    
+    // Verify we're NOT using the test database
+    if (mongoose.connection.name === 'test') {
+      console.error('❌ ERROR: Connected to "test" database instead of "library_inventory"!');
+      await mongoose.connection.close();
+      process.exit(1);
+    }
+    
     console.log('📖 Reading CSV file...');
     const csvText = fs.readFileSync(csvFilePath, 'utf-8');
     
@@ -88,6 +118,7 @@ async function main() {
     
     if (resources.length === 0) {
       console.log('⚠️  No resources found in CSV file');
+      await mongoose.connection.close();
       return;
     }
     
@@ -95,17 +126,25 @@ async function main() {
     console.log('\n📝 Sample resource:');
     console.log(JSON.stringify(resources[0], null, 2));
     
-    console.log('\n🚀 Starting import to Firebase...');
+    console.log('\n🚀 Starting import to MongoDB...');
     await bulkInsert(resources);
     
     console.log('\n✅ Import completed successfully!');
+    await mongoose.connection.close();
+    console.log('🔌 MongoDB connection closed');
     process.exit(0);
   } catch (error) {
     console.error('❌ Error during import:', error.message);
     console.error(error);
+    try {
+      await mongoose.connection.close();
+    } catch (closeError) {
+      // Ignore close errors
+    }
     process.exit(1);
   }
 }
 
 // Run the script
 main();
+
