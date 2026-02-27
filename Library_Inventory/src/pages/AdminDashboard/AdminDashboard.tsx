@@ -20,6 +20,7 @@ function AdminDashboard({ user, onLogout }: AdminDashboardProps) {
   const [message, setMessage] = useState('');
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState<'inventory' | 'users'>('inventory');
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const fetchUsers = async () => {
     setLoading(true);
@@ -82,6 +83,21 @@ function AdminDashboard({ user, onLogout }: AdminDashboardProps) {
     }
   }, [activeTab]);
 
+  const handleInventoryManagement = () => {
+    setSidebarOpen(false)
+    setActiveTab('inventory')
+  };
+
+  const handleUserManegement = () => {
+    setSidebarOpen(false);
+    setActiveTab('users');
+  };
+
+  const handleLogout = () => {
+    setSidebarOpen(false);
+    onLogout();
+  };
+ 
   return (
     <div className={styles.main}>
       <div className={styles.header}>
@@ -92,7 +108,7 @@ function AdminDashboard({ user, onLogout }: AdminDashboardProps) {
             <p>Welcome, {user.name} to Resource Inventory</p>
           </div>
         </div>
-        <div>
+        <div className={styles.sideBar}>
           <button 
             onClick={() => setActiveTab('inventory')} 
             className={`${styles.inventoryManagement} ${activeTab === 'inventory' ? styles.active : ''}`}
@@ -109,6 +125,30 @@ function AdminDashboard({ user, onLogout }: AdminDashboardProps) {
             Logout
           </button>
         </div>
+
+        <button 
+          className={styles.menuToggle}
+          onClick={() => setSidebarOpen(!sidebarOpen)}
+        >
+          ☰
+        </button>
+        <div className={`${styles.mobileSidebar} ${sidebarOpen ? styles.open : ''}`}>
+          <button 
+            onClick={handleInventoryManagement} 
+            className={`${styles.inventoryManagement} ${activeTab === 'inventory' ? styles.active : ''}`}
+          >
+            Inventory Management
+          </button>
+          <button 
+            onClick={handleUserManegement} 
+            className={`${styles.userManagement} ${activeTab === 'users' ? styles.active : ''}`}
+          >
+            User Management
+          </button>
+          <button onClick={handleLogout} className={styles.logoutBTN}>
+            Logout
+          </button>
+        </div>
       </div>
       <div className={styles.body}>
         {activeTab === 'inventory' ? (
@@ -119,15 +159,6 @@ function AdminDashboard({ user, onLogout }: AdminDashboardProps) {
             <button 
               onClick={fetchUsers} 
               disabled={loading}
-              // style={{
-              //   padding: '8px 16px',
-              //   background: '#3498db',
-              //   color: 'white',
-              //   border: 'none',
-              //   borderRadius: '4px',
-              //   cursor: loading ? 'not-allowed' : 'pointer',
-              //   marginBottom: '15px'
-              // }}
             >
               {loading ? 'Loading...' : 'Refresh Users'}
             </button>
