@@ -1,16 +1,12 @@
 // Resource service
-import { db } from '../config/firebase.js';
+import Resource from '../models/Resource.js';
 
 const resourceService = {
   // Get all resources
   getAllResources: async () => {
     try {
-      const snapshot = await db.collection('resources').get();
-      const resources = [];
-      snapshot.forEach(doc => {
-        resources.push({ id: doc.id, ...doc.data() });
-      });
-      return resources;
+      const resources = await Resource.find({});
+      return resources.map(resource => resource.toJSON());
     } catch (error) {
       throw new Error(`Failed to fetch resources: ${error.message}`);
     }
@@ -19,11 +15,11 @@ const resourceService = {
   // Get resource by ID
   getResourceById: async (id) => {
     try {
-      const doc = await db.collection('resources').doc(id).get();
-      if (!doc.exists) {
+      const resource = await Resource.findById(id);
+      if (!resource) {
         throw new Error('Resource not found');
       }
-      return { id: doc.id, ...doc.data() };
+      return resource.toJSON();
     } catch (error) {
       throw new Error(`Failed to fetch resource: ${error.message}`);
     }
@@ -32,11 +28,9 @@ const resourceService = {
   // Create new resource
   createResource: async (resourceData) => {
     try {
-      const docRef = await db.collection('resources').add({
-        ...resourceData,
-        createdAt: new Date().toISOString()
-      });
-      return { id: docRef.id, ...resourceData };
+      const resource = new Resource(resourceData);
+      await resource.save();
+      return resource.toJSON();
     } catch (error) {
       throw new Error(`Failed to create resource: ${error.message}`);
     }
@@ -45,11 +39,17 @@ const resourceService = {
   // Update resource
   updateResource: async (id, resourceData) => {
     try {
-      await db.collection('resources').doc(id).update({
-        ...resourceData,
-        updatedAt: new Date().toISOString()
-      });
-      return { id, ...resourceData };
+      const resource = await Resource.findByIdAndUpdate(
+        id,
+        resourceData,
+        { new: true, runValidators: true }
+      );
+      
+      if (!resource) {
+        throw new Error('Resource not found');
+      }
+      
+      return resource.toJSON();
     } catch (error) {
       throw new Error(`Failed to update resource: ${error.message}`);
     }
@@ -58,7 +58,10 @@ const resourceService = {
   // Delete resource
   deleteResource: async (id) => {
     try {
-      await db.collection('resources').doc(id).delete();
+      const result = await Resource.findByIdAndDelete(id);
+      if (!result) {
+        throw new Error('Resource not found');
+      }
       return true;
     } catch (error) {
       throw new Error(`Failed to delete resource: ${error.message}`);
@@ -68,20 +71,8 @@ const resourceService = {
   // Bulk create resources
   bulkCreateResources: async (resourcesArray) => {
     try {
-      const batch = db.batch();
-      const createdResources = [];
-      
-      resourcesArray.forEach(resourceData => {
-        const docRef = db.collection('resources').doc();
-        batch.set(docRef, {
-          ...resourceData,
-          createdAt: new Date().toISOString()
-        });
-        createdResources.push({ id: docRef.id, ...resourceData });
-      });
-      
-      await batch.commit();
-      return createdResources;
+      const resources = await Resource.insertMany(resourcesArray);
+      return resources.map(resource => resource.toJSON());
     } catch (error) {
       throw new Error(`Failed to bulk create resources: ${error.message}`);
     }
