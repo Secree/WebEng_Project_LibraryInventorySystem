@@ -20,6 +20,19 @@
   font-size: 16px;
 }
 
+@media (max-width: 600px) {
+  .header,
+  .subtitle {
+    font-size: x-small;
+  }
+  @media (max-width: 500px) {
+    .header,
+    .subtitle {
+      font-size: xx-small;
+    }    
+  }
+}
+
 .loading, .error {
   text-align: center;
   padding: 40px;

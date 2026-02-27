@@ -48,8 +48,58 @@
     cursor: pointer;
     font-weight: bold;
     transition: ease 0.3s;
+    margin: 10px;
 }
 
 .logoutBTN:hover {
     background: #E2E8F0;
+}
+
+.menuToggle {
+    display: none;
+    background: transparent;
+    border: none;
+    color: white;
+    font-size: 1.5rem;
+    cursor: pointer;
+    padding: 10px;
+}
+
+.mobileSidebar {
+    display: none;
+    position: fixed;
+    top: 95px;
+    right: -300px;
+    width: 250px;
+    height: calc(100vh - 95px);
+    background: #2563EB;
+    box-shadow: -4px 0 12px rgba(0, 0, 0, 0.15);
+    transition: right 0.3s ease;
+    z-index: 999;
+    padding: 10px;
+}
+
+.mobileSidebar.open {
+    right: 0;
+}
+
+@media (max-width: 700px) {
+    .sideBar {
+        display: none;
+    }
+    .menuToggle {
+        display: block;
+    }
+    .mobileSidebar {
+        display: block;
+    }
+    @media (max-width: 500px) {
+        .headerName {
+            font-size: x-small;
+        }
+        .logoutBTN {
+            font-size: x-small;
+            padding: 5px 10px;
+        }
+    }
 }
