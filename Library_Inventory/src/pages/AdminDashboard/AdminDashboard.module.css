@@ -103,6 +103,115 @@
     right: 0;
 }
 
+/* user management  */
+.userManagementContainer {
+    display: flex;
+    justify-content: center;
+    width: 100%;
+}
+
+.userTitle {
+    display: flex;
+    justify-content: space-between;
+    padding: 10px;
+}
+
+.refreshBTN {
+    height: 50px;
+    width: 150px;
+    padding: 10px 20px;
+    background: #E2E8F0;
+    color: black;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: ease 0.3s;
+    margin: 10px;
+}
+
+.refreshBTN:hover {
+    background: #d6d6d6;
+}
+
+.userManagementTable {
+    width: 80%;
+    margin: 20px;
+    padding: 20px;
+    border-radius: 20px;
+    background-color: #ffffff;
+    overflow-x: auto;
+}
+
+/* Desktop table styles */
+.responsiveTable {
+  width: 100%;
+  border-collapse: collapse;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.responsiveTable thead {
+  background: #f8f9fa;
+}
+
+.responsiveTable th {
+  padding: 12px;
+  text-align: left;
+  border-bottom: 2px solid #ddd;
+  font-weight: 600;
+}
+
+.responsiveTable td {
+  padding: 12px;
+  border-bottom: 1px solid #eee;
+}
+
+.roleSpan {
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: bold;
+}
+
+.deleteBtn {
+  padding: 6px 12px;
+  background: #e74c3c;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.deleteBtn:hover {
+  background: #c0392b;
+}
+
+/* Mobile responsive styles */
+@media (max-width: 768px) {
+  .userManagementTable {
+    width: 100%;
+    margin: 10px;           /* use full width, no big margins */
+    padding: 10px 5px;   /* reduce container padding */
+    overflow-x: auto;    /* horizontal scroll as needed */
+  }
+
+  .responsiveTable {
+    font-size: 12px;     /* smaller text */
+  }
+
+  .responsiveTable th,
+  .responsiveTable td {
+    padding: 6px 8px;    /* tighter cells */
+  }
+
+  /* optionally hide the ID column to save space */
+  .responsiveTable th:first-child,
+  .responsiveTable td:first-child {
+    display: none;
+  }
+}
+
 @media (max-width: 1000px) {
     .sideBar {
         display: none;
