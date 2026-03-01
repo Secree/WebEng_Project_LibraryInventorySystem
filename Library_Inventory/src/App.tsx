@@ -43,7 +43,6 @@ function App() {
 
   useEffect(() => {
     // try to refresh user from backend
-    // Backend will check for httpOnly cookie automatically
     getMe()
       .then((data) => {
         const u = data.user || data;
@@ -53,12 +52,9 @@ function App() {
         }
       })
       .catch((err) => {
-        console.error('Failed to refresh user:', err);
-        // clear invalid session if not on public routes
-        if (location.pathname !== '/login' && location.pathname !== '/register') {
-          setUser(null);
-          localStorage.removeItem('user');
-        }
+        // Do NOT clear session on getMe failure (cross-origin cookie issues in production)
+        // Keep the localStorage user so the session persists on refresh
+        console.warn('getMe failed, keeping local session:', err?.response?.status);
       });
   }, []);
 
