@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import Inventory from '../Inventory/Inventory';
 import styles from './AdminDashboard.module.css';
-import logo from '../../assets/images/MAES-logo.png'
+import logo from '../../assets/images/MAES-logo.png';
+import { getAllUsers as fetchAllUsers, deleteUser as deleteUserApi } from '../../services/api';
 
 interface AdminDashboardProps {
   user: { id: string; name: string; email: string; role: string };
@@ -24,24 +25,11 @@ function AdminDashboard({ user, onLogout }: AdminDashboardProps) {
   const fetchUsers = async () => {
     setLoading(true);
     try {
-      const response = await fetch('http://localhost:3000/api/admin/users', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ userId: user.id }),
-      });
-
-      const data = await response.json();
-
-      if (response.ok) {
-        setUsers(data.users);
-        setMessage('');
-      } else {
-        setMessage(data.message || 'Failed to fetch users');
-      }
-    } catch (error) {
-      setMessage('Error connecting to server');
+      const data = await fetchAllUsers(user.id);
+      setUsers(data.users);
+      setMessage('');
+    } catch (error: any) {
+      setMessage(error?.response?.data?.message || 'Error connecting to server');
       console.error('Fetch users error:', error);
     } finally {
       setLoading(false);
@@ -54,24 +42,11 @@ function AdminDashboard({ user, onLogout }: AdminDashboardProps) {
     }
 
     try {
-      const response = await fetch('http://localhost:3000/api/admin/delete-user', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ userId: user.id, targetUserId }),
-      });
-
-      const data = await response.json();
-
-      if (response.ok) {
-        setMessage('User deleted successfully');
-        fetchUsers(); // Refresh list
-      } else {
-        setMessage(data.message || 'Failed to delete user');
-      }
-    } catch (error) {
-      setMessage('Error connecting to server');
+      await deleteUserApi(user.id, targetUserId);
+      setMessage('User deleted successfully');
+      fetchUsers();
+    } catch (error: any) {
+      setMessage(error?.response?.data?.message || 'Error connecting to server');
       console.error('Delete user error:', error);
     }
   };
