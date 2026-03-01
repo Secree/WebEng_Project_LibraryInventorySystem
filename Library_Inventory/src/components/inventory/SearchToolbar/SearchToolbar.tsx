@@ -55,7 +55,14 @@ function SearchToolbar({
                 className={`${styles.typeTab} ${selectedType === type ? styles.activeTypeTab : ''}`}
                 onClick={() => onTypeChange(type)}
               >
-                {type} ({typeCounts[type] ?? 0})
+                <div className={styles.typeButtons}>
+                  <div className={styles.type}>
+                    {type}
+                  </div>
+                  <div className={styles.typeCounts}>
+                    ({typeCounts[type] ?? 0})
+                  </div>
+                </div>
               </button>
             ))}
           </div>

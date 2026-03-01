@@ -20,6 +20,38 @@
   font-size: 16px;
 }
 
+@media (max-width: 1000px) {
+  .header {
+    margin: 0;
+  }
+  .header,
+  .subtitle {
+    font-size: small;
+  }
+  .subtitle {
+    font-size: x-small;
+  }
+  @media (max-width: 600px) {
+    .header {
+      margin: 0;
+    }
+    .header,
+    .subtitle {
+      font-size: x-small;
+    }
+    .subtitle {
+      font-size: xx-small;
+    }     
+    @media (max-width: 500px) {
+      .header,
+      .subtitle {
+        font-size: xx-small;
+      }    
+    }
+  }
+}
+
+
 .loading, .error {
   text-align: center;
   padding: 40px;
