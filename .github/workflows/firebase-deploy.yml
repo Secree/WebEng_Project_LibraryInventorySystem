@@ -30,19 +30,31 @@ jobs:
           cache-dependency-path: Library_Inventory/package-lock.json
 
       - name: Install frontend dependencies
-        run: |
-          cd Library_Inventory
-          npm ci
-
-          
+        run: npm ci
 
       - name: Build frontend
-        run: |
-          cd Library_Inventory 
-          npm run build
-          
+        run: npm run build
         env:
           VITE_API_URL: ${{ secrets.VITE_API_URL }}
+
+      - name: Validate required secrets
+        env:
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          FIREBASE_PROJECT_ID: ${{ secrets.FIREBASE_PROJECT_ID }}
+          VITE_API_URL: ${{ secrets.VITE_API_URL }}
+        run: |
+          if [ -z "$FIREBASE_SERVICE_ACCOUNT" ]; then
+            echo "Missing required secret: FIREBASE_SERVICE_ACCOUNT"
+            exit 1
+          fi
+          if [ -z "$FIREBASE_PROJECT_ID" ]; then
+            echo "Missing required secret: FIREBASE_PROJECT_ID"
+            exit 1
+          fi
+          if [ -z "$VITE_API_URL" ]; then
+            echo "Missing required secret: VITE_API_URL"
+            exit 1
+          fi
 
       - name: Deploy to Firebase Hosting (live)
         uses: FirebaseExtended/action-hosting-deploy@v0
@@ -63,7 +75,7 @@ jobs:
         run: echo "Render auto-deploys from main when enabled in Render dashboard."
 
       - name: Trigger Render deploy hook (optional)
-        if: ${{ secrets.RENDER_DEPLOY_HOOK_URL != '' }}
+        if: env.RENDER_DEPLOY_HOOK_URL != ''
         run: curl --fail --show-error --silent --request POST "$RENDER_DEPLOY_HOOK_URL"
         env:
           RENDER_DEPLOY_HOOK_URL: ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
