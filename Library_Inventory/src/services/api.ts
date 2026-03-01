@@ -6,6 +6,7 @@ const api = axios.create({
   baseURL: API_BASE,
   headers: { 'Content-Type': 'application/json' },
   withCredentials: true, // Allow cookies to be sent with requests
+  timeout: 20000,
 });
 
 // Resource API functions
