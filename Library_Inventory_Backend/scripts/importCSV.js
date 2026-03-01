@@ -129,6 +129,3 @@ async function main() {
 
 // Run the script
 main();
-
-// Run the script
-main();
