@@ -72,7 +72,7 @@ function Login({ onLoginSuccess }: LoginProps) {
       <img src={logo} alt="Logo" className={styles.logo} />
 
       <h3 className={styles.title}>Welcome</h3>
-      <p className={styles.schoolName}>Macario Arnedo Elementary School</p>
+      <p className={styles.schoolName}>Macario Arnedo High School</p>
 
       <form onSubmit={handleSubmit}>
         <label className={styles.label}>Email:</label>
