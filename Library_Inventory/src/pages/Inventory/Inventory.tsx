@@ -16,20 +16,23 @@ type FilterTab = 'All' | 'Books' | 'Modules' | 'Equipment';
 const FILTER_TABS: FilterTab[] = ['All', 'Books', 'Modules', 'Equipment'];
 
 const mapResourceToTab = (resource: Resource): Exclude<FilterTab, 'All'> => {
-  const type = resource.type.toLowerCase();
+  // Use category (actual material type from CSV) if available, otherwise fall back to type
+  const cat = (resource.category || resource.type || '').toLowerCase();
 
   if (
-    type.includes('laboratory') ||
-    type.includes('equipment') ||
-    type.includes('measuring') ||
-    type.includes('weighing') ||
-    type.includes('safety') ||
-    type.includes('energy')
+    cat.includes('laboratory') ||
+    cat.includes('equipment') ||
+    cat.includes('measuring') ||
+    cat.includes('weighing') ||
+    cat.includes('safety') ||
+    cat.includes('energy') ||
+    cat.includes('anatomical') ||
+    cat.includes('model')
   ) {
     return 'Equipment';
   }
 
-  if (type.includes('reading') || type.includes('learning') || type.includes('book')) {
+  if (cat.includes('reading') || cat.includes('learning') || cat.includes('book')) {
     return 'Books';
   }
 
