@@ -2,11 +2,19 @@
 import jwt from 'jsonwebtoken';
 
 const authMiddleware = {
-  // Verify JWT token from cookie
+  // Verify JWT token from cookie or Authorization header
   verifyToken: (req, res, next) => {
     try {
-      // Get token from cookie
-      const token = req.cookies.token;
+      // Get token from cookie first
+      let token = req.cookies.token;
+
+      // Fallback for browsers blocking cross-site cookies
+      if (!token) {
+        const authHeader = req.headers.authorization || '';
+        if (authHeader.startsWith('Bearer ')) {
+          token = authHeader.slice(7).trim();
+        }
+      }
       
       if (!token) {
         return res.status(401).json({ error: 'No token provided' });

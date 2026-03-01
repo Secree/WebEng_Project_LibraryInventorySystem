@@ -18,7 +18,8 @@ const authController = {
       
       res.status(201).json({
         message: 'Registration successful',
-        user
+        user,
+        token
       });
     } catch (error) {
       console.error('Registration error:', error);
@@ -42,7 +43,8 @@ const authController = {
       
       res.status(200).json({
         message: 'Login successful',
-        user
+        user,
+        token
       });
     } catch (error) {
       console.error('Login error:', error);

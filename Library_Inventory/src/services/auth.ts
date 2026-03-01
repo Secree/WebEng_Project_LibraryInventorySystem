@@ -1,4 +1,5 @@
 import api from './api';
+import { clearAuthToken, setAuthToken } from './session';
 
 const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -34,16 +35,23 @@ async function withRetry<T>(request: () => Promise<T>, retries = 1) {
 
 export async function login(email: string, password: string) {
   const res = await withRetry(() => api.post('/login', { email, password }));
+  if (res.data?.token) {
+    setAuthToken(res.data.token);
+  }
   return res.data; // { message, user }
 }
 
 export async function register(name: string, email: string, password: string, role: string) {
   const res = await api.post('/register', { name, email, password, role });
+  if (res.data?.token) {
+    setAuthToken(res.data.token);
+  }
   return res.data;
 }
 
 export async function logout() {
   const res = await api.post('/logout');
+  clearAuthToken();
   return res.data;
 }
 
