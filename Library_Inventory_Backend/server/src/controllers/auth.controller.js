@@ -11,8 +11,8 @@ const authController = {
       // Set HttpOnly cookie
       res.cookie('token', token, {
         httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'strict',
+        secure: true,
+        sameSite: 'none',
         maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
       });
       
@@ -35,8 +35,8 @@ const authController = {
       // Set HttpOnly cookie
       res.cookie('token', token, {
         httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'strict',
+        secure: true,
+        sameSite: 'none',
         maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
       });
       
@@ -54,8 +54,22 @@ const authController = {
   me: async (req, res) => {
     try {
       if (!req.user) return res.status(401).json({ message: 'Not authenticated' });
-      // req.user is set by auth.middleware.verifyToken (decoded JWT)
-      res.status(200).json({ message: 'User fetched', user: req.user });
+      // Fetch fresh user data from DB to avoid stale JWT name
+      const User = (await import('../models/User.js')).default;
+      const freshUser = await User.findById(req.user.id, '-password').lean();
+      if (!freshUser) return res.status(401).json({ message: 'User not found' });
+      const name = freshUser.lastName && freshUser.lastName !== freshUser.firstName
+        ? `${freshUser.firstName} ${freshUser.lastName}`
+        : freshUser.firstName;
+      res.status(200).json({
+        message: 'User fetched',
+        user: {
+          id: freshUser._id.toString(),
+          name,
+          email: freshUser.email,
+          role: freshUser.role
+        }
+      });
     } catch (error) {
       console.error('Me error:', error);
       res.status(500).json({ message: error.message });
@@ -68,8 +82,8 @@ const authController = {
       // Clear the httpOnly cookie
       res.clearCookie('token', {
         httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'strict'
+        secure: true,
+        sameSite: 'none'
       });
       res.status(200).json({ message: 'Logout successful' });
     } catch (error) {

@@ -9,7 +9,9 @@ const userService = {
       
       return users.map(user => ({
         id: user._id.toString(),
-        name: `${user.firstName} ${user.lastName}`,
+        name: user.lastName && user.lastName !== user.firstName
+          ? `${user.firstName} ${user.lastName}`
+          : user.firstName,
         email: user.email,
         role: user.role,
         _id: undefined
@@ -29,7 +31,9 @@ const userService = {
       
       return {
         id: user._id.toString(),
-        name: `${user.firstName} ${user.lastName}`,
+        name: user.lastName && user.lastName !== user.firstName
+          ? `${user.firstName} ${user.lastName}`
+          : user.firstName,
         email: user.email,
         role: user.role,
         _id: undefined
