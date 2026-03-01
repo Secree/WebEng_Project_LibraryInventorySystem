@@ -20,6 +20,38 @@
   font-size: 16px;
 }
 
+@media (max-width: 1000px) {
+  .header {
+    margin: 0;
+  }
+  .header,
+  .subtitle {
+    font-size: small;
+  }
+  .subtitle {
+    font-size: x-small;
+  }
+  @media (max-width: 600px) {
+    .header {
+      margin: 0;
+    }
+    .header,
+    .subtitle {
+      font-size: x-small;
+    }
+    .subtitle {
+      font-size: xx-small;
+    }     
+    @media (max-width: 500px) {
+      .header,
+      .subtitle {
+        font-size: xx-small;
+      }    
+    }
+  }
+}
+
+
 .loading, .error {
   text-align: center;
   padding: 40px;
@@ -368,6 +400,60 @@ w
   background: #2980b9;
 }
 
+.floatingCartBar {
+  position: fixed;
+  left: 50%;
+  bottom: 16px;
+  transform: translateX(-50%);
+  width: min(760px, calc(100% - 24px));
+  background: #ffffff;
+  border: 1px solid #dbe2ea;
+  border-radius: 12px;
+  box-shadow: 0 12px 24px rgba(15, 23, 42, 0.18);
+  z-index: 900;
+  padding: 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.floatingCartText {
+  margin: 0;
+  color: #1f2d3d;
+  font-weight: 600;
+}
+
+.floatingCartButtons {
+  display: flex;
+  gap: 10px;
+}
+
+.floatingCartAddButton,
+.floatingCartCancelButton {
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  padding: 10px 14px;
+}
+
+.floatingCartAddButton {
+  border: 1px solid #2f66d8;
+  background: #2f66d8;
+  color: #fff;
+}
+
+.floatingCartAddButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.floatingCartCancelButton {
+  border: 1px solid #d1d5db;
+  background: #fff;
+  color: #1f2d3d;
+}
+
 .modalOverlay {
   position: fixed;
   inset: 0;
@@ -586,6 +672,20 @@ w
 
   .modalActions {
     flex-direction: column;
+  }
+
+  .floatingCartBar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .floatingCartButtons {
+    width: 100%;
+  }
+
+  .floatingCartAddButton,
+  .floatingCartCancelButton {
+    flex: 1;
   }
 
   .typeBadge {

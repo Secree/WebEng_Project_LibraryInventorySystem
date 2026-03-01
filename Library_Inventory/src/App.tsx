@@ -20,7 +20,17 @@ function App() {
   const [user, setUser] = useState<User>(() => {
     try {
       const u = localStorage.getItem('user');
-      return u ? JSON.parse(u) : null;
+      if (!u) return null;
+      const parsed = JSON.parse(u);
+      // Fix doubled name (e.g. "p p" → "p") from old registration bug
+      if (parsed?.name) {
+        const parts = parsed.name.trim().split(' ');
+        if (parts.length === 2 && parts[0].toLowerCase() === parts[1].toLowerCase()) {
+          parsed.name = parts[0];
+          localStorage.setItem('user', JSON.stringify(parsed));
+        }
+      }
+      return parsed;
     } catch (e) {
       return null;
     }
@@ -43,7 +53,6 @@ function App() {
 
   useEffect(() => {
     // try to refresh user from backend
-    // Backend will check for httpOnly cookie automatically
     getMe()
       .then((data) => {
         const u = data.user || data;
@@ -53,12 +62,9 @@ function App() {
         }
       })
       .catch((err) => {
-        console.error('Failed to refresh user:', err);
-        // clear invalid session if not on public routes
-        if (location.pathname !== '/login' && location.pathname !== '/register') {
-          setUser(null);
-          localStorage.removeItem('user');
-        }
+        // Do NOT clear session on getMe failure (cross-origin cookie issues in production)
+        // Keep the localStorage user so the session persists on refresh
+        console.warn('getMe failed, keeping local session:', err?.response?.status);
       });
   }, []);
 

@@ -37,6 +37,20 @@ function ResourceGrid({
             key={resource.id}
             className={`${styles.resourceCard} ${isSelected ? styles.selectedCard : ''}`}
           >
+            <div className={styles.cardImage}>
+              {resource.pictureUrl ? (
+                <img
+                  src={resource.pictureUrl}
+                  alt={resource.title}
+                  onError={(e) => {
+                    (e.currentTarget as HTMLImageElement).style.display = 'none';
+                  }}
+                />
+              ) : (
+                <span style={{ fontSize: '48px', color: '#ccc' }}>📦</span>
+              )}
+            </div>
+
             <div className={styles.cardHeader}>
               <h3 className={styles.resourceTitle}>{resource.title}</h3>
               <span className={`${styles.typeBadge} ${styles[resource.type.replace(/\s+/g, '')]}`}>

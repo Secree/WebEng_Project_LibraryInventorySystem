@@ -23,7 +23,7 @@ const authService = {
       // Split name into first and last name
       const nameParts = name.trim().split(' ');
       const firstName = nameParts[0];
-      const lastName = nameParts.slice(1).join(' ') || nameParts[0];
+      const lastName = nameParts.slice(1).join(' ') || '';
 
       // Create new user
       const newUser = new User({
@@ -36,9 +36,13 @@ const authService = {
 
       await newUser.save();
 
+      const displayName = firstName && lastName && lastName !== firstName
+        ? `${firstName} ${lastName}`
+        : firstName;
+
       const returnedUser = {
         id: newUser._id.toString(),
-        name: newUser.firstName + ' ' + newUser.lastName,
+        name: displayName,
         email: newUser.email,
         role: newUser.role
       };
@@ -77,7 +81,9 @@ const authService = {
 
       const returnedUser = {
         id: user._id.toString(),
-        name: user.firstName + ' ' + user.lastName,
+        name: user.lastName && user.lastName !== user.firstName
+          ? `${user.firstName} ${user.lastName}`
+          : user.firstName,
         email: user.email,
         role: user.role || 'user'
       };

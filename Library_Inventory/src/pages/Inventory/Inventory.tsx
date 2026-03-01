@@ -4,6 +4,7 @@ import styles from './Inventory.module.css';
 import SearchToolbar from '../../components/inventory/SearchToolbar/SearchToolbar';
 import ResourceGrid from '../../components/inventory/ResourceGrid';
 import CheckoutModal from '../../components/inventory/CheckoutModal';
+import MultiCheckoutModal from '../../components/inventory/MultiCheckoutModal';
 import CartOverviewModal from '../../components/inventory/CartOverviewModal';
 import type { Resource } from '../../components/inventory/types';
 
@@ -16,20 +17,23 @@ type FilterTab = 'All' | 'Books' | 'Modules' | 'Equipment';
 const FILTER_TABS: FilterTab[] = ['All', 'Books', 'Modules', 'Equipment'];
 
 const mapResourceToTab = (resource: Resource): Exclude<FilterTab, 'All'> => {
-  const type = resource.type.toLowerCase();
+  // Use category (actual material type from CSV) if available, otherwise fall back to type
+  const cat = (resource.category || resource.type || '').toLowerCase();
 
   if (
-    type.includes('laboratory') ||
-    type.includes('equipment') ||
-    type.includes('measuring') ||
-    type.includes('weighing') ||
-    type.includes('safety') ||
-    type.includes('energy')
+    cat.includes('laboratory') ||
+    cat.includes('equipment') ||
+    cat.includes('measuring') ||
+    cat.includes('weighing') ||
+    cat.includes('safety') ||
+    cat.includes('energy') ||
+    cat.includes('anatomical') ||
+    cat.includes('model')
   ) {
     return 'Equipment';
   }
 
-  if (type.includes('reading') || type.includes('learning') || type.includes('book')) {
+  if (cat.includes('reading') || cat.includes('learning') || cat.includes('book')) {
     return 'Books';
   }
 
@@ -44,8 +48,11 @@ function Inventory({ userRole }: InventoryProps) {
   const [selectedResourceIds, setSelectedResourceIds] = useState<string[]>([]);
   const [cartResourceIds, setCartResourceIds] = useState<string[]>([]);
   const [checkoutResource, setCheckoutResource] = useState<Resource | null>(null);
+  const [multiCheckoutResources, setMultiCheckoutResources] = useState<Resource[]>([]);
   const [isCheckoutModalOpen, setIsCheckoutModalOpen] = useState(false);
+  const [isMultiCheckoutModalOpen, setIsMultiCheckoutModalOpen] = useState(false);
   const [isCartModalOpen, setIsCartModalOpen] = useState(false);
+  const [showFloatingCartActions, setShowFloatingCartActions] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
@@ -53,6 +60,24 @@ function Inventory({ userRole }: InventoryProps) {
   useEffect(() => {
     fetchResources();
   }, []);
+
+  useEffect(() => {
+    if (!isMultiSelectMode) {
+      setShowFloatingCartActions(false);
+      return;
+    }
+
+    const handleScroll = () => {
+      setShowFloatingCartActions(window.scrollY > 220);
+    };
+
+    handleScroll();
+    window.addEventListener('scroll', handleScroll, { passive: true });
+
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+    };
+  }, [isMultiSelectMode]);
 
   const fetchResources = async () => {
     setLoading(true);
@@ -183,11 +208,22 @@ function Inventory({ userRole }: InventoryProps) {
       return;
     }
 
-    alert(`Checkout submitted for ${availableItems.length} item(s).`);
-    setCartResourceIds((prev) =>
-      prev.filter((id) => !availableItems.some((item) => item.id === id))
-    );
+    setMultiCheckoutResources(availableItems);
+    setIsMultiCheckoutModalOpen(true);
     setIsCartModalOpen(false);
+  };
+
+  const handleCloseMultiCheckoutModal = () => {
+    setIsMultiCheckoutModalOpen(false);
+    setMultiCheckoutResources([]);
+  };
+
+  const handleConfirmMultiCheckout = () => {
+    alert(`Checkout submitted for ${multiCheckoutResources.length} item(s).`);
+    setCartResourceIds((prev) =>
+      prev.filter((id) => !multiCheckoutResources.some((item) => item.id === id))
+    );
+    handleCloseMultiCheckoutModal();
   };
 
   const clearFilters = () => {
@@ -241,11 +277,45 @@ function Inventory({ userRole }: InventoryProps) {
         onClearFilters={clearFilters}
       />
 
+      {userRole === 'user' && isMultiSelectMode && showFloatingCartActions && (
+        <div className={styles.floatingCartBar}>
+          <p className={styles.floatingCartText}>
+            {selectedResourceIds.length > 0
+              ? `${selectedResourceIds.length} item(s) selected`
+              : 'Select materials to add to cart'}
+          </p>
+          <div className={styles.floatingCartButtons}>
+            <button
+              type="button"
+              className={styles.floatingCartAddButton}
+              onClick={handleAddToCart}
+              disabled={selectedResourceIds.length === 0}
+            >
+              Add to Cart ({selectedResourceIds.length})
+            </button>
+            <button
+              type="button"
+              className={styles.floatingCartCancelButton}
+              onClick={handleCancelMultiSelect}
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
+
       <CheckoutModal
         isOpen={isCheckoutModalOpen}
         resource={checkoutResource}
         onClose={handleCloseCheckoutModal}
         onConfirm={handleConfirmSingleCheckout}
+      />
+
+      <MultiCheckoutModal
+        isOpen={isMultiCheckoutModalOpen}
+        resources={multiCheckoutResources}
+        onClose={handleCloseMultiCheckoutModal}
+        onConfirm={handleConfirmMultiCheckout}
       />
 
       <CartOverviewModal

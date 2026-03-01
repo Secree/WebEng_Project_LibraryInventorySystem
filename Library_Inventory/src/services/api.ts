@@ -34,4 +34,15 @@ export const deleteResource = async (id: string) => {
   return response.data;
 };
 
+// Admin API functions
+export const getAllUsers = async (userId: string) => {
+  const response = await api.post('/admin/users', { userId });
+  return response.data;
+};
+
+export const deleteUser = async (userId: string, targetUserId: string) => {
+  const response = await api.post('/admin/delete-user', { userId, targetUserId });
+  return response.data;
+};
+
 export default api;

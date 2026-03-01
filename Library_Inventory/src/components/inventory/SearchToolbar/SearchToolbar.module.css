@@ -1,15 +1,15 @@
 .searchContainer {
-    display: flex;
-    justify-content: center;
+  display: flex;
+  justify-content: center;
 }
 
 .searchSection {
-    width: 50%;
-    background: #f8f9fa;
-    padding: 20px;
-    border-radius: 10px;
-    margin-bottom: 30px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  width: 50%;
+  background: #f8f9fa;
+  padding: 20px;
+  border-radius: 10px;
+  margin-bottom: 30px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 
 .searchBar {
@@ -31,12 +31,6 @@
 .searchInput:focus {
   outline: none;
   border-color: #3498db;
-}
-
-@media (max-width: 1000px) {
-    .searchInput {
-        width: 100%;
-    }
 }
 
 .filterBar {
@@ -71,6 +65,11 @@
 .activeTypeTab {
   background: #2f66d8;
   color: white;
+}
+
+.typeButtons {
+  display: flex;
+  justify-content: center;  
 }
 
 .toolbarActions {
@@ -111,4 +110,67 @@
   color: #7f8c8d;
   font-size: 14px;
   font-style: italic;
+}
+
+@media (max-width: 1400px) {
+  .filterBar {
+    display: block;
+  } 
+  .toolbarActions {
+    display: flex;
+    justify-content: space-between;
+    margin: 10px;
+  }
+  .multiSelectButton {
+    width: 100%;
+  }
+  .typeTab,
+  .cartButton,
+  .cancelButton {
+    width: 100%;
+  }
+  @media (max-width: 1000px) {
+    .searchSection {
+      width: 80%;
+    }
+    .searchInput {
+        width: 100%;
+    }
+    .typeButtons {
+      display: block;
+      justify-content: center;  
+    }
+    @media (max-width: 750px) {
+      .searchSection {
+        width: 90%;
+        padding: 10px;
+        margin: 10px;
+      }
+      .searchInput,
+      .typeTab,
+      .multiSelectButton,
+      .cartButton,
+      .cancelButton,
+      .resultsCount {
+        font-size: small;
+      }  
+      @media (max-width: 500px) {
+        .searchInput,
+        .typeTab,
+        .multiSelectButton,
+        .cartButton,
+        .cancelButton {
+          font-size: x-small;
+        }  
+        .resultsCount {
+          font-size: xx-small;
+        }
+        @media (max-width:375px) {
+          .typeTab {
+              padding: 2px 5px;
+          }
+        }
+      }       
+    }
+  }
 }
