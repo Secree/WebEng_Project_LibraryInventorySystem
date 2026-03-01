@@ -54,8 +54,22 @@ const authController = {
   me: async (req, res) => {
     try {
       if (!req.user) return res.status(401).json({ message: 'Not authenticated' });
-      // req.user is set by auth.middleware.verifyToken (decoded JWT)
-      res.status(200).json({ message: 'User fetched', user: req.user });
+      // Fetch fresh user data from DB to avoid stale JWT name
+      const User = (await import('../models/User.js')).default;
+      const freshUser = await User.findById(req.user.id, '-password').lean();
+      if (!freshUser) return res.status(401).json({ message: 'User not found' });
+      const name = freshUser.lastName && freshUser.lastName !== freshUser.firstName
+        ? `${freshUser.firstName} ${freshUser.lastName}`
+        : freshUser.firstName;
+      res.status(200).json({
+        message: 'User fetched',
+        user: {
+          id: freshUser._id.toString(),
+          name,
+          email: freshUser.email,
+          role: freshUser.role
+        }
+      });
     } catch (error) {
       console.error('Me error:', error);
       res.status(500).json({ message: error.message });

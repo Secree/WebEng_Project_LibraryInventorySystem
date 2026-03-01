@@ -20,7 +20,17 @@ function App() {
   const [user, setUser] = useState<User>(() => {
     try {
       const u = localStorage.getItem('user');
-      return u ? JSON.parse(u) : null;
+      if (!u) return null;
+      const parsed = JSON.parse(u);
+      // Fix doubled name (e.g. "p p" → "p") from old registration bug
+      if (parsed?.name) {
+        const parts = parsed.name.trim().split(' ');
+        if (parts.length === 2 && parts[0].toLowerCase() === parts[1].toLowerCase()) {
+          parsed.name = parts[0];
+          localStorage.setItem('user', JSON.stringify(parsed));
+        }
+      }
+      return parsed;
     } catch (e) {
       return null;
     }
