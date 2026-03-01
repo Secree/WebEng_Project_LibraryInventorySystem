@@ -56,9 +56,14 @@ function Login({ onLoginSuccess }: LoginProps) {
       } else if (error.response?.status === 500) {
         // Server error
         setMessage('Server error. Please try again later.');
-      } else if (error.message === 'Network Error') {
+      } else if (
+        error.code === 'ERR_NETWORK' ||
+        error.code === 'ECONNABORTED' ||
+        String(error.message || '').toLowerCase().includes('request aborted') ||
+        error.message === 'Network Error'
+      ) {
         // Network error
-        setMessage('Network error. Check your connection.');
+        setMessage('Connection interrupted. Please try again in a few seconds.');
       } else {
         // Unknown error
         setMessage('Error connecting to server');

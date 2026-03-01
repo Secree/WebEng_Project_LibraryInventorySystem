@@ -64,7 +64,9 @@ function App() {
       .catch((err) => {
         // Do NOT clear session on getMe failure (cross-origin cookie issues in production)
         // Keep the localStorage user so the session persists on refresh
-        console.warn('getMe failed, keeping local session:', err?.response?.status);
+        const status = err?.response?.status;
+        const detail = status || err?.code || err?.message || 'unknown error';
+        console.warn('getMe failed, keeping local session:', detail);
       });
   }, []);
 
