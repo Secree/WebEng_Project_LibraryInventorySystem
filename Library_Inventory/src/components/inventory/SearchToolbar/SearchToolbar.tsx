@@ -1,4 +1,6 @@
 import styles from './SearchToolbar.module.css';
+import { Search, Grid3X3, BookOpen, Box, Wrench, SquareCheck } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
 
 interface SearchToolbarProps {
   searchQuery: string;
@@ -33,38 +35,54 @@ function SearchToolbar({
   onAddToCart,
   onCancelMultiSelect,
 }: SearchToolbarProps) {
+  const typeIcons: Record<string, LucideIcon> = {
+    All: Grid3X3,
+    Books: BookOpen,
+    Modules: Box,
+    Equipment: Wrench,
+  };
+
   return (
     <div className={styles.searchContainer}>
       <div className={styles.searchSection}>
         <div className={styles.searchBar}>
-          <input
-            type="text"
-            placeholder="🔍 Search by title, keywords, or topics..."
-            value={searchQuery}
-            onChange={(e) => onSearchChange(e.target.value)}
-            className={styles.searchInput}
-          />
+          <div className={styles.searchInputWrap}>
+            <Search className={styles.searchIcon} size={16} strokeWidth={2} aria-hidden="true" />
+            <input
+              type="text"
+              placeholder="Search by keyword, subject, or title..."
+              value={searchQuery}
+              onChange={(e) => onSearchChange(e.target.value)}
+              className={styles.searchInput}
+            />
+          </div>
+          <button
+            type="button"
+            className={styles.searchButton}
+            onClick={() => onSearchChange(searchQuery)}
+          >
+            Search
+          </button>
         </div>
 
         <div className={styles.filterBar}>
           <div className={styles.typeTabs}>
-            {types.map((type) => (
-              <button
-                key={type}
-                type="button"
-                className={`${styles.typeTab} ${selectedType === type ? styles.activeTypeTab : ''}`}
-                onClick={() => onTypeChange(type)}
-              >
-                <div className={styles.typeButtons}>
-                  <div className={styles.type}>
-                    {type}
-                  </div>
-                  <div className={styles.typeCounts}>
-                    ({typeCounts[type] ?? 0})
-                  </div>
-                </div>
-              </button>
-            ))}
+            {types.map((type) => {
+              const TabIcon = typeIcons[type] ?? Grid3X3;
+
+              return (
+                <button
+                  key={type}
+                  type="button"
+                  className={`${styles.typeTab} ${selectedType === type ? styles.activeTypeTab : ''}`}
+                  onClick={() => onTypeChange(type)}
+                >
+                  <TabIcon className={styles.tabIcon} size={14} strokeWidth={2} aria-hidden="true" />
+                  <span>{type}</span>
+                  <span className={styles.typeCounts}>({typeCounts[type] ?? 0})</span>
+                </button>
+              );
+            })}
           </div>
 
           {showMultiSelectControls && (
@@ -93,6 +111,7 @@ function SearchToolbar({
                   className={styles.multiSelectButton}
                   onClick={onToggleMultiSelectMode}
                 >
+                  <SquareCheck className={styles.selectIcon} size={14} strokeWidth={2} aria-hidden="true" />
                   Select Multiple
                 </button>
               )}
@@ -101,7 +120,8 @@ function SearchToolbar({
         </div>
 
         <div className={styles.resultsCount}>
-          Showing {filteredCount} of {totalCount} items
+          Showing {filteredCount} results
+          {searchQuery ? ` (from ${totalCount})` : ''}
         </div>
       </div>
     </div>

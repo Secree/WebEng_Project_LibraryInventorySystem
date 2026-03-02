@@ -48,10 +48,12 @@ git push origin main
 Click "Advanced" and add these environment variables:
 
 ```
-FRONTEND_URL=https://libraryinventory-f6b9d.web.app
+FRONTEND_URL=https://libraryinventory-f6b9d.web.app,https://libraryinventory-f6b9d.firebaseapp.com
 PORT=3000
 NODE_ENV=production
 ```
+
+`FRONTEND_URL` now supports multiple origins separated by commas. This is recommended for Firebase Hosting because users may reach your app from both `web.app` and `firebaseapp.com` domains.
 
 **Important**: Add your Firebase credentials:
 - `FIREBASE_SERVICE_ACCOUNT` - Your Firebase service account JSON (as a string)
@@ -131,7 +133,12 @@ To prevent cold starts, you can:
 2. Or upgrade to a paid plan ($7/month) for always-on service
 
 ### CORS Configuration
-Your backend already has CORS configured to accept requests from your frontend. If you change the frontend URL, update the `FRONTEND_URL` environment variable in Render.
+Your backend already has CORS configured to accept requests from your frontend. If you change frontend domains, update the `FRONTEND_URL` environment variable in Render using comma-separated values.
+
+Example:
+```
+FRONTEND_URL=https://your-project.web.app,https://your-project.firebaseapp.com
+```
 
 ## Troubleshooting
 
@@ -148,6 +155,7 @@ Your backend already has CORS configured to accept requests from your frontend. 
 ### Issue: Frontend can't reach backend
 - Check CORS settings in backend
 - Verify frontend API URL is correct
+- Verify `FRONTEND_URL` contains all frontend domains (comma-separated)
 - Check if backend is sleeping (wait 30 seconds for cold start)
 
 ### Issue: Environment variables not working

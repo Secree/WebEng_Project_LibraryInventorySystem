@@ -77,11 +77,31 @@
   background-color: #1d55ce;
 }
 
-/* .message {
-  margin-top: 15px;
+.button:disabled {
+  opacity: 0.75;
+  cursor: not-allowed;
+}
+
+.statusMessage,
+.errorMessage {
+  margin-top: 14px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  font-size: 14px;
   text-align: center;
-  color: #e11d48;
-} */
+}
+
+.statusMessage {
+  color: #1d4ed8;
+  background: #dbeafe;
+  border: 1px solid #93c5fd;
+}
+
+.errorMessage {
+  color: #b91c1c;
+  background: #fee2e2;
+  border: 1px solid #fca5a5;
+}
 
 .forgotPS {
     font-size: 15px;
