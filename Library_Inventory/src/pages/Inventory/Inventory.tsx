@@ -1,6 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { getAllResources, updateResource } from '../../services/api';
-import { getAuthToken } from '../../services/session';
+import { getAllResources } from '../../services/api';
 import styles from './Inventory.module.css';
 import SearchToolbar from '../../components/inventory/SearchToolbar/SearchToolbar';
 import ResourceGrid from '../../components/inventory/ResourceGrid';
@@ -232,57 +231,6 @@ function Inventory({ userRole }: InventoryProps) {
     setSelectedType('All');
   };
 
-  const handleUpdateQuantity = async (resourceId: string, newQuantity: number) => {
-    // Check if user has a valid token before attempting update
-    const token = getAuthToken();
-    if (!token) {
-      alert('Your session has expired. Please log in again to make changes.');
-      window.location.href = '/login';
-      return;
-    }
-
-    // Store the previous quantity for potential rollback
-    const previousResource = resources.find(r => r.id === resourceId);
-    const previousQuantity = previousResource?.quantity || 0;
-
-    try {
-      // Optimistically update the UI
-      setResources(prevResources =>
-        prevResources.map(resource =>
-          resource.id === resourceId
-            ? { ...resource, quantity: newQuantity }
-            : resource
-        )
-      );
-
-      // Update the resource on the server
-      await updateResource(resourceId, { quantity: newQuantity });
-      setError(''); // Clear any previous errors
-    } catch (err: any) {
-      console.error('Error updating quantity:', err);
-      
-      // Rollback to previous quantity
-      setResources(prevResources =>
-        prevResources.map(resource =>
-          resource.id === resourceId
-            ? { ...resource, quantity: previousQuantity }
-            : resource
-        )
-      );
-      
-      const errorMsg = err.response?.data?.error || err.message || 'Failed to update quantity';
-      setError(errorMsg);
-      
-      // Handle authentication errors specially
-      if (errorMsg.includes('No token') || errorMsg.includes('token') || err.response?.status === 401) {
-        alert('Your session has expired. Please log in again to make changes.');
-        window.location.href = '/login';
-      } else {
-        alert(`Failed to update quantity: ${errorMsg}`);
-      }
-    }
-  };
-
   if (loading) {
     return (
       <div className={styles.container}>
@@ -327,7 +275,6 @@ function Inventory({ userRole }: InventoryProps) {
         onReserve={handleReserve}
         onToggleResourceSelection={handleToggleResourceSelection}
         onClearFilters={clearFilters}
-        onUpdateQuantity={handleUpdateQuantity}
       />
 
       {userRole === 'user' && isMultiSelectMode && showFloatingCartActions && (
