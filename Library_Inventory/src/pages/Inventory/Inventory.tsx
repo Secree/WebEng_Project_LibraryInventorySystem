@@ -142,7 +142,19 @@ function Inventory({ userRole }: InventoryProps) {
       alert(`✓ Successfully updated ${changesCount} item${changesCount > 1 ? 's' : ''} in the database.`);
     } catch (err: any) {
       console.error('Error updating quantities:', err);
-      alert('✗ Failed to update quantities. Please try again.');
+      const errorMessage = err?.response?.data?.error || err?.message || 'Unknown error';
+      const statusCode = err?.response?.status;
+      
+      let alertMessage = '✗ Failed to update quantities.\n\n';
+      if (statusCode === 401) {
+        alertMessage += 'Authentication error: Please log in again.';
+      } else if (statusCode === 403) {
+        alertMessage += 'Permission denied: Admin access required.';
+      } else {
+        alertMessage += `Error: ${errorMessage}`;
+      }
+      
+      alert(alertMessage);
       
       // Refresh to revert to actual database state
       fetchResources();
