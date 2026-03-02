@@ -669,6 +669,98 @@
   text-align: center;
 }
 
+/* Quantity Editor for Admin */
+.quantityEditor {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.quantityBtn {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 2px solid var(--inv-primary);
+  background: var(--inv-surface);
+  color: var(--inv-primary);
+  font-size: 18px;
+  font-weight: bold;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  padding: 0;
+  line-height: 1;
+}
+
+.quantityBtn:hover:not(:disabled) {
+  background: var(--inv-primary);
+  color: white;
+  transform: scale(1.1);
+}
+
+.quantityBtn:active:not(:disabled) {
+  transform: scale(0.95);
+}
+
+.quantityBtn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  border-color: #ccc;
+  color: #ccc;
+}
+
+.quantityValue {
+  min-width: 40px;
+  text-align: center;
+  font-weight: 600;
+  font-size: 16px;
+  color: var(--inv-text);
+}
+
+/* Quantity Animation - Up */
+@keyframes quantityBounceUp {
+  0% {
+    transform: translateY(0);
+  }
+  30% {
+    transform: translateY(-8px);
+    color: #10b981;
+  }
+  50% {
+    transform: translateY(-4px);
+  }
+  100% {
+    transform: translateY(0);
+  }
+}
+
+.quantityAnimateUp {
+  animation: quantityBounceUp 0.3s ease-out;
+}
+
+/* Quantity Animation - Down */
+@keyframes quantityBounceDown {
+  0% {
+    transform: translateY(0);
+  }
+  30% {
+    transform: translateY(8px);
+    color: #ef4444;
+  }
+  50% {
+    transform: translateY(4px);
+  }
+  100% {
+    transform: translateY(0);
+  }
+}
+
+.quantityAnimateDown {
+  animation: quantityBounceDown 0.3s ease-out;
+}
+
 /* Responsive Design */
 @media (max-width: 768px) {
   .toolbarActions {

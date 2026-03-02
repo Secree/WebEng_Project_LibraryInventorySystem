@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import styles from '../../pages/Inventory/Inventory.module.css';
 import type { Resource } from './types';
 
@@ -9,6 +10,7 @@ interface ResourceGridProps {
   onReserve: (resourceId: string) => void;
   onToggleResourceSelection: (resourceId: string) => void;
   onClearFilters: () => void;
+  onQuantityUpdate?: (resourceId: string, newQuantity: number) => Promise<void>;
 }
 
 function ResourceGrid({
@@ -19,7 +21,27 @@ function ResourceGrid({
   onReserve,
   onToggleResourceSelection,
   onClearFilters,
+  onQuantityUpdate,
 }: ResourceGridProps) {
+  const [animatingQuantity, setAnimatingQuantity] = useState<{[key: string]: 'up' | 'down' | null}>({});
+
+  const handleQuantityChange = async (resourceId: string, currentQuantity: number, increment: boolean) => {
+    const newQuantity = increment ? currentQuantity + 1 : Math.max(0, currentQuantity - 1);
+    
+    // Trigger animation
+    setAnimatingQuantity(prev => ({ ...prev, [resourceId]: increment ? 'up' : 'down' }));
+    
+    // Call update function
+    if (onQuantityUpdate) {
+      await onQuantityUpdate(resourceId, newQuantity);
+    }
+    
+    // Remove animation after delay
+    setTimeout(() => {
+      setAnimatingQuantity(prev => ({ ...prev, [resourceId]: null }));
+    }, 300);
+  };
+
   return (
     <div className={styles.resourcesGrid}>
       {resources.length === 0 ? (
@@ -61,9 +83,33 @@ function ResourceGrid({
             <div className={styles.cardBody}>
               <div className={styles.infoRow}>
                 <span className={styles.label}>Quantity:</span>
-                <span className={styles.value}>
-                  {resource.quantity} {resource.quantity === 1 ? 'item' : 'items'}
-                </span>
+                {userRole === 'admin' ? (
+                  <div className={styles.quantityEditor}>
+                    <button 
+                      className={styles.quantityBtn}
+                      onClick={() => handleQuantityChange(resource.id, resource.quantity, false)}
+                      disabled={resource.quantity <= 0}
+                    >
+                      −
+                    </button>
+                    <span className={`${styles.quantityValue} ${
+                      animatingQuantity[resource.id] === 'up' ? styles.quantityAnimateUp :
+                      animatingQuantity[resource.id] === 'down' ? styles.quantityAnimateDown : ''
+                    }`}>
+                      {resource.quantity}
+                    </span>
+                    <button 
+                      className={styles.quantityBtn}
+                      onClick={() => handleQuantityChange(resource.id, resource.quantity, true)}
+                    >
+                      +
+                    </button>
+                  </div>
+                ) : (
+                  <span className={styles.value}>
+                    {resource.quantity} {resource.quantity === 1 ? 'item' : 'items'}
+                  </span>
+                )}
               </div>
 
               <div className={styles.infoRow}>

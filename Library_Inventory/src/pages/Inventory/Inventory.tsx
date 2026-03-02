@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { getAllResources } from '../../services/api';
+import { getAllResources, updateResource } from '../../services/api';
 import styles from './Inventory.module.css';
 import SearchToolbar from '../../components/inventory/SearchToolbar/SearchToolbar';
 import ResourceGrid from '../../components/inventory/ResourceGrid';
@@ -90,6 +90,27 @@ function Inventory({ userRole }: InventoryProps) {
       console.error('Error fetching resources:', err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleQuantityUpdate = async (resourceId: string, newQuantity: number) => {
+    try {
+      // Optimistically update the UI
+      setResources(prevResources =>
+        prevResources.map(resource =>
+          resource.id === resourceId
+            ? { ...resource, quantity: newQuantity }
+            : resource
+        )
+      );
+
+      // Update the backend
+      await updateResource(resourceId, { quantity: newQuantity });
+    } catch (err: any) {
+      console.error('Error updating quantity:', err);
+      setError('Failed to update quantity. Please try again.');
+      // Revert on error
+      fetchResources();
     }
   };
 
@@ -275,6 +296,7 @@ function Inventory({ userRole }: InventoryProps) {
         onReserve={handleReserve}
         onToggleResourceSelection={handleToggleResourceSelection}
         onClearFilters={clearFilters}
+        onQuantityUpdate={userRole === 'admin' ? handleQuantityUpdate : undefined}
       />
 
       {userRole === 'user' && isMultiSelectMode && showFloatingCartActions && (
