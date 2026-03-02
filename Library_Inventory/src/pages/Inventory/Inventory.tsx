@@ -184,8 +184,8 @@ function Inventory({ userRole }: InventoryProps) {
     setCheckoutResource(null);
   };
 
-  const handleConfirmSingleCheckout = (resourceId: string) => {
-    alert(`Checkout submitted for resource: ${resourceId}`);
+  const handleConfirmSingleCheckout = (resourceId: string, borrowDate: string) => {
+    alert(`Checkout submitted for resource: ${resourceId} on ${borrowDate}`);
     handleCloseCheckoutModal();
   };
 
@@ -218,8 +218,8 @@ function Inventory({ userRole }: InventoryProps) {
     setMultiCheckoutResources([]);
   };
 
-  const handleConfirmMultiCheckout = () => {
-    alert(`Checkout submitted for ${multiCheckoutResources.length} item(s).`);
+  const handleConfirmMultiCheckout = (borrowDate: string) => {
+    alert(`Checkout submitted for ${multiCheckoutResources.length} item(s) on ${borrowDate}.`);
     setCartResourceIds((prev) =>
       prev.filter((id) => !multiCheckoutResources.some((item) => item.id === id))
     );
