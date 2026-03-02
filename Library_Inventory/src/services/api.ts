@@ -12,14 +12,31 @@ const api = axios.create({
 
 api.interceptors.request.use((config) => {
   const token = getAuthToken();
+  console.log('API Request:', { url: config.url, hasToken: !!token, tokenPreview: token ? `${token.substring(0, 20)}...` : 'none' });
 
   if (token) {
     config.headers = config.headers || {};
     config.headers.Authorization = `Bearer ${token}`;
+  } else {
+    console.warn('No token found in localStorage for authenticated request');
   }
 
   return config;
 });
+
+// Response interceptor to log errors
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    console.error('API Error:', {
+      url: error.config?.url,
+      status: error.response?.status,
+      message: error.response?.data?.error || error.response?.data?.message || error.message,
+      headers: error.config?.headers
+    });
+    return Promise.reject(error);
+  }
+);
 
 // Resource API functions
 export const getAllResources = async () => {
