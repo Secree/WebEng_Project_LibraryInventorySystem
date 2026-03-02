@@ -98,7 +98,7 @@
   border: 1px solid #d7dfeb;
   border-radius: 12px;
   background: var(--inv-surface);
-  flex: 1;
+  /* flex: 1; */
 }
 
 .typeTab {
@@ -200,7 +200,16 @@
   }
 
   .toolbarActions {
-    justify-content: flex-end;
+    display: flex;
+    justify-content: space-around;
+  }
+
+  .multiSelectButton,
+  .cartButton,
+  .cancelButton {
+    display: flex;
+    justify-content: center;
+    width: 100%;
   }
 
   .resultsCount {
