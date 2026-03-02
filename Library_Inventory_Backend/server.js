@@ -16,6 +16,25 @@ console.log('JWT Secret configured:', !!process.env.JWT_SECRET);
 
 const app = express();
 
+const allowedOrigins = (process.env.FRONTEND_URL || 'http://localhost:5173')
+  .split(',')
+  .map((origin) => origin.trim().replace(/\/$/, ''))
+  .filter(Boolean);
+
+const isAllowedOrigin = (origin = '') => {
+  const normalizedOrigin = origin.replace(/\/$/, '');
+
+  if (allowedOrigins.includes(normalizedOrigin)) {
+    return true;
+  }
+
+  if (/^http:\/\/localhost(:\d+)?$/.test(normalizedOrigin)) {
+    return true;
+  }
+
+  return false;
+};
+
 // Connect to MongoDB (non-blocking)
 connectDB().catch(err => {
   console.error('Failed to connect to MongoDB:', err.message);
@@ -24,8 +43,15 @@ const PORT = process.env.PORT || 3000;
 
 // Middleware
 app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:5173',
-  credentials: true  // Allow credentials (cookies)
+  origin: (origin, callback) => {
+    if (!origin || isAllowedOrigin(origin)) {
+      return callback(null, true);
+    }
+
+    return callback(new Error(`Not allowed by CORS: ${origin}`));
+  },
+  credentials: true,
+  optionsSuccessStatus: 204,
 }));
 app.use(express.json());
 app.use(cookieParser());

@@ -1,4 +1,15 @@
 .container {
+  --inv-bg: #f4f8ff;
+  --inv-surface: #ffffff;
+  --inv-border: #d6e3f5;
+  --inv-text: #1f2d3d;
+  --inv-muted: #5f7188;
+  --inv-primary: #2f66d8;
+  --inv-primary-dark: #2553b3;
+  --inv-primary-soft: #e8f1ff;
+}
+
+.container {
   max-width: 1400px;
   margin: 0 auto;
   padding: 20px;
@@ -11,12 +22,12 @@
 }
 
 .header h1 {
-  color: #2c3e50;
+  color: var(--inv-text);
   margin-bottom: 10px;
 }
 
 .subtitle {
-  color: #7f8c8d;
+  color: var(--inv-muted);
   font-size: 16px;
 }
 
@@ -67,7 +78,7 @@
 
 /* Search Section */
 .searchSection {
-  background: #f8f9fa;
+  background: var(--inv-bg);
   padding: 20px;
   border-radius: 10px;
   margin-bottom: 30px;
@@ -82,14 +93,16 @@
   width: 100%;
   padding: 12px 20px;
   font-size: 16px;
-  border: 2px solid #ddd;
+  border: 2px solid var(--inv-border);
   border-radius: 8px;
   transition: border-color 0.3s;
+  color: var(--inv-text);
+  background: var(--inv-surface);
 }
 
 .searchInput:focus {
   outline: none;
-  border-color: #3498db;
+  border-color: var(--inv-primary);
 }
 
 .filterBar {
@@ -106,9 +119,9 @@
   flex-wrap: nowrap;
   overflow-x: auto;
   padding: 4px;
-  border: 1px solid #d6dee7;
+  border: 1px solid var(--inv-border);
   border-radius: 12px;
-  background: white;
+  background: var(--inv-surface);
   flex: 1;
   min-width: 260px;
 }
@@ -116,7 +129,7 @@
 .typeTab {
   border: none;
   background: transparent;
-  color: #2c3e50;
+  color: var(--inv-text);
   padding: 10px 16px;
   border-radius: 10px;
   cursor: pointer;
@@ -125,7 +138,7 @@
 }
 
 .activeTypeTab {
-  background: #2f66d8;
+  background: var(--inv-primary);
   color: white;
 }
 
@@ -140,16 +153,16 @@
 .cancelButton {
   padding: 8px 14px;
   border-radius: 6px;
-  border: 1px solid #cfd8e3;
-  background: white;
-  color: #2c3e50;
+  border: 1px solid var(--inv-border);
+  background: var(--inv-surface);
+  color: var(--inv-text);
   font-size: 14px;
   cursor: pointer;
 }
 
 .cartButton {
-  background: #e3f2fd;
-  color: #1565c0;
+  background: var(--inv-primary-soft);
+  color: var(--inv-primary-dark);
 }
 
 .cartButton:disabled {
@@ -158,13 +171,13 @@
 }
 
 .cancelButton {
-  background: #3498db;
+  background: var(--inv-primary);
   color: white;
-  border-color: #3498db;
+  border-color: var(--inv-primary);
 }
 
 .resultsCount {
-  color: #7f8c8d;
+  color: var(--inv-muted);
   font-size: 14px;
   font-style: italic;
 }
@@ -178,8 +191,8 @@
 }
 
 .resourceCard {
-  background: white;
-  border: 1px solid #e0e0e0;
+  background: var(--inv-surface);
+  border: 1px solid var(--inv-border);
   border-radius: 10px;
   padding: 20px;
   box-shadow: 0 2px 8px rgba(0,0,0,0.1);
@@ -187,8 +200,8 @@
 }
 
 .selectedCard {
-  border-color: #3498db;
-  box-shadow: 0 0 0 1px #3498db;
+  border-color: var(--inv-primary);
+  box-shadow: 0 0 0 1px var(--inv-primary);
 }
 
 .resourceCard:hover {
@@ -228,7 +241,7 @@ w
 }
 
 .resourceTitle {
-  color: #2c3e50;
+  color: var(--inv-text);
   font-size: 18px;
   margin: 0;
   flex: 1;
@@ -242,8 +255,8 @@ w
   font-weight: 600;
   text-transform: uppercase;
   white-space: nowrap;
-  background: #ecf0f1;
-  color: #34495e;
+  background: #eaf2ff;
+  color: #2b4d7a;
 }
 
 .typeBadge.ReadingMaterials {
@@ -280,12 +293,12 @@ w
 
 .label {
   font-weight: 600;
-  color: #555;
+  color: var(--inv-muted);
   font-size: 14px;
 }
 
 .value {
-  color: #333;
+  color: var(--inv-text);
   font-size: 14px;
 }
 
@@ -311,7 +324,7 @@ w
 }
 
 .topicsText {
-  color: #555;
+  color: var(--inv-muted);
   font-size: 13px;
   margin: 5px 0 0 0;
   line-height: 1.5;
@@ -329,8 +342,8 @@ w
 }
 
 .keywordTag {
-  background: #e3f2fd;
-  color: #1976d2;
+  background: var(--inv-primary-soft);
+  color: var(--inv-primary-dark);
   padding: 4px 10px;
   border-radius: 12px;
   font-size: 12px;
@@ -346,7 +359,7 @@ w
 .reserveButton {
   width: 100%;
   padding: 10px;
-  background: #3498db;
+  background: var(--inv-primary);
   color: white;
   border: none;
   border-radius: 6px;
@@ -357,7 +370,7 @@ w
 }
 
 .reserveButton:hover:not(:disabled) {
-  background: #2980b9;
+  background: var(--inv-primary-dark);
 }
 
 .reserveButton:disabled {
@@ -366,19 +379,19 @@ w
 }
 
 .inCartButton {
-  background: #d6eaf8;
-  color: #21618c;
+  background: var(--inv-primary-soft);
+  color: var(--inv-primary-dark);
 }
 
 .inCartButton:hover:not(:disabled) {
-  background: #d6eaf8;
+  background: var(--inv-primary-soft);
 }
 
 .noResults {
   grid-column: 1 / -1;
   text-align: center;
   padding: 60px 20px;
-  color: #7f8c8d;
+  color: var(--inv-muted);
 }
 
 .noResults p {
@@ -388,7 +401,7 @@ w
 
 .noResults button {
   padding: 10px 20px;
-  background: #3498db;
+  background: var(--inv-primary);
   color: white;
   border: none;
   border-radius: 6px;
@@ -397,7 +410,7 @@ w
 }
 
 .noResults button:hover {
-  background: #2980b9;
+  background: var(--inv-primary-dark);
 }
 
 .floatingCartBar {
@@ -406,8 +419,8 @@ w
   bottom: 16px;
   transform: translateX(-50%);
   width: min(760px, calc(100% - 24px));
-  background: #ffffff;
-  border: 1px solid #dbe2ea;
+  background: var(--inv-surface);
+  border: 1px solid var(--inv-border);
   border-radius: 12px;
   box-shadow: 0 12px 24px rgba(15, 23, 42, 0.18);
   z-index: 900;
@@ -420,7 +433,7 @@ w
 
 .floatingCartText {
   margin: 0;
-  color: #1f2d3d;
+  color: var(--inv-text);
   font-weight: 600;
 }
 
@@ -438,8 +451,8 @@ w
 }
 
 .floatingCartAddButton {
-  border: 1px solid #2f66d8;
-  background: #2f66d8;
+  border: 1px solid var(--inv-primary);
+  background: var(--inv-primary);
   color: #fff;
 }
 
@@ -449,9 +462,9 @@ w
 }
 
 .floatingCartCancelButton {
-  border: 1px solid #d1d5db;
-  background: #fff;
-  color: #1f2d3d;
+  border: 1px solid var(--inv-border);
+  background: var(--inv-surface);
+  color: var(--inv-text);
 }
 
 .modalOverlay {
@@ -469,9 +482,9 @@ w
   width: min(760px, 100%);
   max-height: 90vh;
   overflow: auto;
-  background: #fff;
+  background: var(--inv-surface);
   border-radius: 12px;
-  border: 1px solid #dbe2ea;
+  border: 1px solid var(--inv-border);
   box-shadow: 0 16px 40px rgba(15, 23, 42, 0.2);
   padding: 18px;
 }
@@ -486,13 +499,13 @@ w
 
 .modalTitle {
   margin: 0;
-  color: #1f2d3d;
+  color: var(--inv-text);
   font-size: 28px;
 }
 
 .modalSubtitle {
   margin: 4px 0 0;
-  color: #64748b;
+  color: var(--inv-muted);
   font-size: 14px;
 }
 
@@ -519,7 +532,7 @@ w
 .modalSectionTitle {
   margin: 0 0 10px;
   font-size: 20px;
-  color: #1f2d3d;
+  color: var(--inv-text);
 }
 
 .modalGroupHeader {
@@ -530,15 +543,15 @@ w
 }
 
 .modalCount {
-  background: #eef2ff;
-  color: #3757d6;
+  background: var(--inv-primary-soft);
+  color: var(--inv-primary-dark);
   border-radius: 999px;
   padding: 4px 10px;
   font-size: 12px;
 }
 
 .modalCard {
-  border: 1px solid #dbe2ea;
+  border: 1px solid var(--inv-border);
   border-radius: 10px;
   padding: 12px;
   margin-bottom: 10px;
@@ -553,13 +566,13 @@ w
 
 .modalItemTitle {
   margin: 0;
-  color: #1f2d3d;
+  color: var(--inv-text);
   font-weight: 700;
 }
 
 .modalMeta {
   margin: 4px 0 0;
-  color: #64748b;
+  color: var(--inv-muted);
 }
 
 .modalDescription {
@@ -572,19 +585,28 @@ w
   display: flex;
   flex-wrap: wrap;
   gap: 20px;
-  border: 1px solid #dbe2ea;
+  border: 1px solid var(--inv-border);
   border-radius: 10px;
   padding: 12px;
 }
 
 .modalDateLabel {
-  color: #64748b;
+  color: var(--inv-muted);
   margin-right: 6px;
 }
 
 .modalDateValue {
-  color: #1f2d3d;
+  color: var(--inv-text);
   font-weight: 600;
+}
+
+.modalDateInput {
+  border: 1px solid var(--inv-border);
+  border-radius: 8px;
+  color: var(--inv-text);
+  background: var(--inv-surface);
+  padding: 8px 10px;
+  font-size: 14px;
 }
 
 .modalActions {
@@ -603,8 +625,8 @@ w
 }
 
 .modalPrimaryButton {
-  border: 1px solid #2f66d8;
-  background: #2f66d8;
+  border: 1px solid var(--inv-primary);
+  background: var(--inv-primary);
   color: #fff;
   padding: 10px 14px;
 }
@@ -615,9 +637,9 @@ w
 }
 
 .modalSecondaryButton {
-  border: 1px solid #d1d5db;
-  background: #fff;
-  color: #1f2d3d;
+  border: 1px solid var(--inv-border);
+  background: var(--inv-surface);
+  color: var(--inv-text);
   padding: 10px 14px;
 }
 
@@ -638,10 +660,10 @@ w
 }
 
 .modalEmpty {
-  border: 1px dashed #cbd5e1;
+  border: 1px dashed var(--inv-border);
   padding: 14px;
   border-radius: 10px;
-  color: #64748b;
+  color: var(--inv-muted);
   text-align: center;
 }
 
