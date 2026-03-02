@@ -24,7 +24,6 @@
 .header h1 {
   color: var(--inv-primary);
   margin-bottom: 8px;
-  font-size: clamp(32px, 2.8vw, 40px);
   font-weight: 600;
 }
 
