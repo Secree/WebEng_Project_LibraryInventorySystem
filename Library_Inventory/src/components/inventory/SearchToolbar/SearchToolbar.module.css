@@ -1,11 +1,22 @@
 .searchContainer {
+  --inv-bg: #f4f8ff;
+  --inv-surface: #ffffff;
+  --inv-border: #d6e3f5;
+  --inv-text: #1f2d3d;
+  --inv-muted: #5f7188;
+  --inv-primary: #2f66d8;
+  --inv-primary-dark: #2553b3;
+  --inv-primary-soft: #e8f1ff;
+}
+
+.searchContainer {
   display: flex;
   justify-content: center;
 }
 
 .searchSection {
   width: 50%;
-  background: #f8f9fa;
+  background: var(--inv-bg);
   padding: 20px;
   border-radius: 10px;
   margin-bottom: 30px;
@@ -23,14 +34,16 @@
     width: 100%;
     padding: 12px 20px;
     font-size: 16px;
-    border: 2px solid #ddd;
+    border: 2px solid var(--inv-border);
     border-radius: 8px;
     transition: border-color 0.3s;
+    color: var(--inv-text);
+    background: var(--inv-surface);
 }
 
 .searchInput:focus {
   outline: none;
-  border-color: #3498db;
+  border-color: var(--inv-primary);
 }
 
 .filterBar {
@@ -46,15 +59,15 @@
   flex-wrap: nowrap;
   overflow-x: auto;
   padding: 4px;
-  border: 1px solid #d6dee7;
+  border: 1px solid var(--inv-border);
   border-radius: 12px;
-  background: white;
+  background: var(--inv-surface);
 }
 
 .typeTab {
   border: none;
   background: transparent;
-  color: #2c3e50;
+  color: var(--inv-text);
   padding: 10px 16px;
   border-radius: 10px;
   cursor: pointer;
@@ -63,7 +76,7 @@
 }
 
 .activeTypeTab {
-  background: #2f66d8;
+  background: var(--inv-primary);
   color: white;
 }
 
@@ -83,16 +96,16 @@
 .cancelButton {
   padding: 8px 14px;
   border-radius: 6px;
-  border: 1px solid #cfd8e3;
-  background: white;
-  color: #2c3e50;
+  border: 1px solid var(--inv-border);
+  background: var(--inv-surface);
+  color: var(--inv-text);
   font-size: 14px;
   cursor: pointer;
 }
 
 .cartButton {
-  background: #e3f2fd;
-  color: #1565c0;
+  background: var(--inv-primary-soft);
+  color: var(--inv-primary-dark);
 }
 
 .cartButton:disabled {
@@ -101,13 +114,13 @@
 }
 
 .cancelButton {
-  background: #3498db;
+  background: var(--inv-primary);
   color: white;
-  border-color: #3498db;
+  border-color: var(--inv-primary);
 }
 
 .resultsCount {
-  color: #7f8c8d;
+  color: var(--inv-muted);
   font-size: 14px;
   font-style: italic;
 }
