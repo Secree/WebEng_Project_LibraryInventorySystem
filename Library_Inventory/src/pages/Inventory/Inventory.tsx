@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { getAllResources } from '../../services/api';
+import { getAllResources, updateResource } from '../../services/api';
 import styles from './Inventory.module.css';
 import SearchToolbar from '../../components/inventory/SearchToolbar/SearchToolbar';
 import ResourceGrid from '../../components/inventory/ResourceGrid';
@@ -55,6 +55,8 @@ function Inventory({ userRole }: InventoryProps) {
   const [showFloatingCartActions, setShowFloatingCartActions] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [pendingQuantityChanges, setPendingQuantityChanges] = useState<Record<string, number>>({});
+  const [isSaving, setIsSaving] = useState(false);
 
   // Fetch resources on mount
   useEffect(() => {
@@ -90,6 +92,71 @@ function Inventory({ userRole }: InventoryProps) {
       console.error('Error fetching resources:', err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleQuantityChange = (resourceId: string, newQuantity: number) => {
+    // Track pending change
+    setPendingQuantityChanges(prev => ({
+      ...prev,
+      [resourceId]: newQuantity
+    }));
+  };
+
+  const handleConfirmQuantityChanges = async () => {
+    const changesCount = Object.keys(pendingQuantityChanges).length;
+    
+    if (changesCount === 0) return;
+
+    const confirmMessage = `Are you sure you want to save ${changesCount} quantity change${changesCount > 1 ? 's' : ''} to the database?`;
+    
+    if (!window.confirm(confirmMessage)) {
+      return;
+    }
+
+    setIsSaving(true);
+    
+    try {
+      // Update each resource in the database
+      const updatePromises = Object.entries(pendingQuantityChanges).map(async ([resourceId, newQuantity]) => {
+        const resource = resources.find(r => r.id === resourceId);
+        if (!resource) return;
+        
+        await updateResource(resourceId, { ...resource, quantity: newQuantity });
+      });
+
+      await Promise.all(updatePromises);
+
+      // Update local state with all changes
+      setResources(prevResources =>
+        prevResources.map(r =>
+          pendingQuantityChanges[r.id] !== undefined
+            ? { ...r, quantity: pendingQuantityChanges[r.id] }
+            : r
+        )
+      );
+
+      // Clear pending changes
+      setPendingQuantityChanges({});
+      
+      alert(`✓ Successfully updated ${changesCount} item${changesCount > 1 ? 's' : ''} in the database.`);
+    } catch (err: any) {
+      console.error('Error updating quantities:', err);
+      alert('✗ Failed to update quantities. Please try again.');
+      
+      // Refresh to revert to actual database state
+      fetchResources();
+      setPendingQuantityChanges({});
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleCancelQuantityChanges = () => {
+    if (Object.keys(pendingQuantityChanges).length === 0) return;
+
+    if (window.confirm('Discard all pending quantity changes?')) {
+      setPendingQuantityChanges({});
     }
   };
 
@@ -275,7 +342,37 @@ function Inventory({ userRole }: InventoryProps) {
         onReserve={handleReserve}
         onToggleResourceSelection={handleToggleResourceSelection}
         onClearFilters={clearFilters}
+        onQuantityChange={userRole === 'admin' ? handleQuantityChange : undefined}
+        pendingQuantityChanges={pendingQuantityChanges}
       />
+
+      {userRole === 'admin' && Object.keys(pendingQuantityChanges).length > 0 && (
+        <div className={styles.quantityConfirmationBar}>
+          <div className={styles.confirmationContent}>
+            <p className={styles.confirmationText}>
+              {Object.keys(pendingQuantityChanges).length} item{Object.keys(pendingQuantityChanges).length > 1 ? 's' : ''} pending changes
+            </p>
+            <div className={styles.confirmationButtons}>
+              <button
+                type="button"
+                className={styles.confirmButton}
+                onClick={handleConfirmQuantityChanges}
+                disabled={isSaving}
+              >
+                {isSaving ? 'Saving...' : 'Confirm Changes'}
+              </button>
+              <button
+                type="button"
+                className={styles.cancelChangesButton}
+                onClick={handleCancelQuantityChanges}
+                disabled={isSaving}
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {userRole === 'user' && isMultiSelectMode && showFloatingCartActions && (
         <div className={styles.floatingCartBar}>

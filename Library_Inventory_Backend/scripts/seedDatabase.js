@@ -49,7 +49,6 @@ const seedDatabase = async () => {
         publisher: 'Tech Books Publishing',
         yearPublished: 2023,
         quantity: 5,
-        availableQuantity: 5,
         location: 'Shelf A1',
         description: 'A comprehensive guide to programming fundamentals',
         status: 'available'
@@ -63,7 +62,6 @@ const seedDatabase = async () => {
         publisher: 'Web Press',
         yearPublished: 2024,
         quantity: 3,
-        availableQuantity: 3,
         location: 'Shelf B2',
         description: 'Learn HTML, CSS, and JavaScript',
         status: 'available'
@@ -77,7 +75,6 @@ const seedDatabase = async () => {
         publisher: 'Data Books',
         yearPublished: 2023,
         quantity: 4,
-        availableQuantity: 4,
         location: 'Shelf C3',
         description: 'Master database design and normalization',
         status: 'available'
@@ -88,7 +85,6 @@ const seedDatabase = async () => {
         category: 'Programming',
         type: 'digital',
         quantity: 10,
-        availableQuantity: 10,
         location: 'Digital Library',
         description: 'ES6+ features and best practices',
         status: 'available'
@@ -102,7 +98,6 @@ const seedDatabase = async () => {
         publisher: 'Frontend Press',
         yearPublished: 2024,
         quantity: 6,
-        availableQuantity: 6,
         location: 'Shelf D4',
         description: 'Learn React from scratch',
         status: 'available'
