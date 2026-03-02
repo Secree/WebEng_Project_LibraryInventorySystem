@@ -44,7 +44,6 @@ function parseCSV(csvText) {
       category: typeOfMaterial,
       type: 'other',
       quantity: quantity,
-      availableQuantity: quantity,
       description: suggestedTopics || 'No description available',
       suggestedTopics: suggestedTopics,
       keywords: keywords,

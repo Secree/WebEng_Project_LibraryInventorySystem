@@ -37,12 +37,6 @@ const resourceSchema = new mongoose.Schema({
     min: 0,
     default: 1
   },
-  availableQuantity: {
-    type: Number,
-    required: true,
-    min: 0,
-    default: 1
-  },
   location: {
     type: String,
     trim: true
