@@ -35,8 +35,12 @@ async function withRetry<T>(request: () => Promise<T>, retries = 1) {
 
 export async function login(email: string, password: string) {
   const res = await withRetry(() => api.post('/login', { email, password }));
+  console.log('Login response:', { hasToken: !!res.data?.token, user: res.data?.user });
   if (res.data?.token) {
     setAuthToken(res.data.token);
+    console.log('Token saved to localStorage');
+  } else {
+    console.error('No token received from server');
   }
   return res.data; // { message, user }
 }

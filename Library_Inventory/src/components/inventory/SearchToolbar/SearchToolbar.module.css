@@ -98,7 +98,7 @@
   border: 1px solid #d7dfeb;
   border-radius: 12px;
   background: var(--inv-surface);
-  flex: 1;
+  /* flex: 1; */
 }
 
 .typeTab {
@@ -186,12 +186,13 @@
 }
 
 @media (max-width: 980px) {
-  .searchBar {
-    grid-template-columns: 1fr;
-  }
-
   .searchButton {
     width: 100%;
+  }
+
+  .typeTabs {
+    display: flex;
+    justify-content: space-around;
   }
 
   .filterBar {
@@ -200,7 +201,16 @@
   }
 
   .toolbarActions {
-    justify-content: flex-end;
+    display: flex;
+    justify-content: space-around;
+  }
+
+  .multiSelectButton,
+  .cartButton,
+  .cancelButton {
+    display: flex;
+    justify-content: center;
+    width: 100%;
   }
 
   .resultsCount {
@@ -210,6 +220,7 @@
 
 @media (max-width: 600px) {
   .typeTab {
+    display: block;
     font-size: 13px;
     padding: 8px 12px;
   }
@@ -220,3 +231,20 @@
     font-size: 13px;
   }
 }
+
+@media (max-width: 500px) {
+  .searchSection {
+    margin: 0;
+  }
+  .searchInput,
+  .searchButton,
+  .typeTab,
+  .multiSelectButton,
+  .cartButton,
+  .cancelButton {
+    font-size: x-small;
+  }  
+  .resultsCount {
+    font-size: xx-small;
+  }
+}  

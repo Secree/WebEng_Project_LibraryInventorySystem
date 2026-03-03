@@ -24,7 +24,6 @@
 .header h1 {
   color: var(--inv-primary);
   margin-bottom: 8px;
-  font-size: clamp(32px, 2.8vw, 40px);
   font-weight: 600;
 }
 
@@ -187,8 +186,8 @@
 /* Resources Grid */
 .resourcesGrid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
-  gap: 20px;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 16px;
   margin-top: 20px;
 }
 
@@ -196,7 +195,7 @@
   background: var(--inv-surface);
   border: 1px solid var(--inv-border);
   border-radius: 10px;
-  padding: 20px;
+  padding: 16px;
   box-shadow: 0 2px 8px rgba(0,0,0,0.1);
   transition: transform 0.2s, box-shadow 0.2s;
 }
@@ -213,10 +212,10 @@
 
 .cardImage {
   width: 100%;
-  height: 200px;
+  height: 180px;
   overflow: hidden;
   border-radius: 8px;
-  margin-bottom: 15px;
+  margin-bottom: 12px;
   background: #f5f5f5;
   display: flex;
   align-items: center;
@@ -227,6 +226,8 @@
   width: 100%;
   height: 100%;
   object-fit: cover;
+  image-rendering: auto;
+  image-rendering: -webkit-optimize-contrast;
   transition: transform 0.3s ease;
 }
 
@@ -302,6 +303,112 @@
 .value {
   color: var(--inv-text);
   font-size: 14px;
+}
+
+/* Quantity Controls for Admin */
+.quantityControls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.quantityButton {
+  width: 32px;
+  height: 32px;
+  border: 2px solid var(--inv-primary);
+  background: white;
+  color: var(--inv-primary);
+  border-radius: 6px;
+  font-size: 18px;
+  font-weight: bold;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  padding: 0;
+  line-height: 1;
+}
+
+.quantityButton:hover:not(:disabled) {
+  background: var(--inv-primary);
+  color: white;
+  transform: scale(1.1);
+  box-shadow: 0 2px 8px rgba(47, 102, 216, 0.3);
+}
+
+.quantityButton:active:not(:disabled) {
+  transform: scale(0.95);
+}
+
+.quantityButton:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  border-color: #ccc;
+  color: #ccc;
+}
+
+.quantityValue {
+  color: var(--inv-text);
+  font-size: 14px;
+  font-weight: 600;
+  min-width: 80px;
+  text-align: center;
+  display: inline-block;
+  position: relative;
+}
+
+/* Animation for quantity increase */
+@keyframes slideUp {
+  0% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+  50% {
+    transform: translateY(-10px);
+    opacity: 0.5;
+  }
+  100% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+/* Animation for quantity decrease */
+@keyframes slideDown {
+  0% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+  50% {
+    transform: translateY(10px);
+    opacity: 0.5;
+  }
+  100% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.quantityAnimateUp {
+  animation: slideUp 0.4s ease-in-out;
+}
+
+.quantityAnimateDown {
+  animation: slideDown 0.4s ease-in-out;
+}
+
+/* Pending quantity changes indicator */
+.quantityPending {
+  color: #f59e0b;
+  font-weight: 700;
+}
+
+.pendingIndicator {
+  color: #f59e0b;
+  font-size: 18px;
+  margin-left: 4px;
+  font-weight: bold;
 }
 
 .status {
@@ -467,6 +574,98 @@
   border: 1px solid var(--inv-border);
   background: var(--inv-surface);
   color: var(--inv-text);
+}
+
+/* Quantity Confirmation Bar */
+.quantityConfirmationBar {
+  position: fixed;
+  left: 50%;
+  bottom: 16px;
+  transform: translateX(-50%);
+  width: min(760px, calc(100% - 24px));
+  background: #fff8e1;
+  border: 2px solid #f59e0b;
+  border-radius: 12px;
+  box-shadow: 0 12px 24px rgba(245, 158, 11, 0.25);
+  z-index: 900;
+  padding: 14px 18px;
+  animation: slideUpFadeIn 0.3s ease-out;
+}
+
+@keyframes slideUpFadeIn {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+}
+
+.confirmationContent {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+}
+
+.confirmationText {
+  margin: 0;
+  color: #92400e;
+  font-weight: 600;
+  font-size: 15px;
+}
+
+.confirmationButtons {
+  display: flex;
+  gap: 10px;
+}
+
+.confirmButton,
+.cancelChangesButton {
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  padding: 10px 18px;
+  font-size: 14px;
+  transition: all 0.2s ease;
+}
+
+.confirmButton {
+  border: 2px solid #10b981;
+  background: #10b981;
+  color: white;
+}
+
+.confirmButton:hover:not(:disabled) {
+  background: #059669;
+  border-color: #059669;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+}
+
+.confirmButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.cancelChangesButton {
+  border: 2px solid #ef4444;
+  background: white;
+  color: #ef4444;
+}
+
+.cancelChangesButton:hover:not(:disabled) {
+  background: #ef4444;
+  color: white;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+}
+
+.cancelChangesButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 .modalOverlay {
