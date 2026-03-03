@@ -323,7 +323,7 @@ function Inventory({ userRole }: InventoryProps) {
   return (
     <div className={styles.container}>
       <div className={styles.header}>
-        <h1>Find Your Resources</h1>
+        <h1 className={styles.title}>Find Your Resources</h1>
         <p className={styles.subtitle}>Search through our collection of books, modules, and equipment</p>
       </div>
 

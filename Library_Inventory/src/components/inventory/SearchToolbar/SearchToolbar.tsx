@@ -77,9 +77,15 @@ function SearchToolbar({
                   className={`${styles.typeTab} ${selectedType === type ? styles.activeTypeTab : ''}`}
                   onClick={() => onTypeChange(type)}
                 >
-                  <TabIcon className={styles.tabIcon} size={14} strokeWidth={2} aria-hidden="true" />
-                  <span>{type}</span>
-                  <span className={styles.typeCounts}>({typeCounts[type] ?? 0})</span>
+                  <div>
+                    <TabIcon className={styles.tabIcon} size={14} strokeWidth={2} aria-hidden="true" />
+                  </div>
+                  <div>
+                    <span>{type}</span>
+                  </div>
+                  <div>
+                    <span className={styles.typeCounts}>({typeCounts[type] ?? 0})</span>
+                  </div> 
                 </button>
               );
             })}
