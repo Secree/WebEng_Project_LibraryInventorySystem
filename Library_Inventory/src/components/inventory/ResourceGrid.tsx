@@ -10,8 +10,7 @@ interface ResourceGridProps {
   onReserve: (resourceId: string) => void;
   onToggleResourceSelection: (resourceId: string) => void;
   onClearFilters: () => void;
-  onQuantityChange?: (resourceId: string, newQuantity: number) => void;
-  pendingQuantityChanges?: Record<string, number>;
+  onQuantityUpdate?: (resourceId: string, newQuantity: number) => Promise<void>;
 }
 
 function ResourceGrid({
@@ -22,28 +21,25 @@ function ResourceGrid({
   onReserve,
   onToggleResourceSelection,
   onClearFilters,
-  onQuantityChange,
-  pendingQuantityChanges = {},
+  onQuantityUpdate,
 }: ResourceGridProps) {
-  const [animatingQuantity, setAnimatingQuantity] = useState<{ [key: string]: 'up' | 'down' | null }>({});
+  const [animatingQuantity, setAnimatingQuantity] = useState<{[key: string]: 'up' | 'down' | null}>({});
 
-  const handleQuantityChange = (resourceId: string, delta: number, currentQuantity: number) => {
-    const newQuantity = Math.max(0, currentQuantity + delta);
-    
-    if (newQuantity === currentQuantity) return;
+  const handleQuantityChange = async (resourceId: string, currentQuantity: number, increment: boolean) => {
+    const newQuantity = increment ? currentQuantity + 1 : Math.max(0, currentQuantity - 1);
     
     // Trigger animation
-    setAnimatingQuantity(prev => ({ ...prev, [resourceId]: delta > 0 ? 'up' : 'down' }));
+    setAnimatingQuantity(prev => ({ ...prev, [resourceId]: increment ? 'up' : 'down' }));
     
-    // Call the update function
-    if (onQuantityChange) {
-      onQuantityChange(resourceId, newQuantity);
+    // Call update function
+    if (onQuantityUpdate) {
+      await onQuantityUpdate(resourceId, newQuantity);
     }
     
-    // Clear animation after it completes
+    // Remove animation after delay
     setTimeout(() => {
       setAnimatingQuantity(prev => ({ ...prev, [resourceId]: null }));
-    }, 400);
+    }, 300);
   };
 
   return (
@@ -88,28 +84,23 @@ function ResourceGrid({
               <div className={styles.infoRow}>
                 <span className={styles.label}>Quantity:</span>
                 {userRole === 'admin' ? (
-                  <div className={styles.quantityControls}>
-                    <button
-                      className={styles.quantityButton}
-                      onClick={() => handleQuantityChange(resource.id, -1, pendingQuantityChanges[resource.id] ?? resource.quantity)}
-                      disabled={(pendingQuantityChanges[resource.id] ?? resource.quantity) <= 0}
-                      aria-label="Decrease quantity"
+                  <div className={styles.quantityEditor}>
+                    <button 
+                      className={styles.quantityBtn}
+                      onClick={() => handleQuantityChange(resource.id, resource.quantity, false)}
+                      disabled={resource.quantity <= 0}
                     >
                       −
                     </button>
                     <span className={`${styles.quantityValue} ${
-                      animatingQuantity[resource.id] === 'up' ? styles.quantityAnimateUp : 
+                      animatingQuantity[resource.id] === 'up' ? styles.quantityAnimateUp :
                       animatingQuantity[resource.id] === 'down' ? styles.quantityAnimateDown : ''
-                    } ${pendingQuantityChanges[resource.id] !== undefined ? styles.quantityPending : ''}`}>
-                      {pendingQuantityChanges[resource.id] ?? resource.quantity} {(pendingQuantityChanges[resource.id] ?? resource.quantity) === 1 ? 'item' : 'items'}
-                      {pendingQuantityChanges[resource.id] !== undefined && (
-                        <span className={styles.pendingIndicator}>*</span>
-                      )}
+                    }`}>
+                      {resource.quantity}
                     </span>
-                    <button
-                      className={styles.quantityButton}
-                      onClick={() => handleQuantityChange(resource.id, 1, pendingQuantityChanges[resource.id] ?? resource.quantity)}
-                      aria-label="Increase quantity"
+                    <button 
+                      className={styles.quantityBtn}
+                      onClick={() => handleQuantityChange(resource.id, resource.quantity, true)}
                     >
                       +
                     </button>

@@ -95,80 +95,24 @@ function Inventory({ userRole }: InventoryProps) {
     }
   };
 
-  const handleQuantityChange = (resourceId: string, newQuantity: number) => {
-    // Track pending change
-    setPendingQuantityChanges(prev => ({
-      ...prev,
-      [resourceId]: newQuantity
-    }));
-  };
-
-  const handleConfirmQuantityChanges = async () => {
-    const changesCount = Object.keys(pendingQuantityChanges).length;
-    
-    if (changesCount === 0) return;
-
-    const confirmMessage = `Are you sure you want to save ${changesCount} quantity change${changesCount > 1 ? 's' : ''} to the database?`;
-    
-    if (!window.confirm(confirmMessage)) {
-      return;
-    }
-
-    setIsSaving(true);
-    
+  const handleQuantityUpdate = async (resourceId: string, newQuantity: number) => {
     try {
-      // Update each resource in the database
-      const updatePromises = Object.entries(pendingQuantityChanges).map(async ([resourceId, newQuantity]) => {
-        const resource = resources.find(r => r.id === resourceId);
-        if (!resource) return;
-        
-        await updateResource(resourceId, { ...resource, quantity: newQuantity });
-      });
-
-      await Promise.all(updatePromises);
-
-      // Update local state with all changes
+      // Optimistically update the UI
       setResources(prevResources =>
-        prevResources.map(r =>
-          pendingQuantityChanges[r.id] !== undefined
-            ? { ...r, quantity: pendingQuantityChanges[r.id] }
-            : r
+        prevResources.map(resource =>
+          resource.id === resourceId
+            ? { ...resource, quantity: newQuantity }
+            : resource
         )
       );
 
-      // Clear pending changes
-      setPendingQuantityChanges({});
-      
-      alert(`✓ Successfully updated ${changesCount} item${changesCount > 1 ? 's' : ''} in the database.`);
+      // Update the backend
+      await updateResource(resourceId, { quantity: newQuantity });
     } catch (err: any) {
-      console.error('Error updating quantities:', err);
-      const errorMessage = err?.response?.data?.error || err?.message || 'Unknown error';
-      const statusCode = err?.response?.status;
-      
-      let alertMessage = '✗ Failed to update quantities.\n\n';
-      if (statusCode === 401) {
-        alertMessage += 'Authentication error: Please log in again.';
-      } else if (statusCode === 403) {
-        alertMessage += 'Permission denied: Admin access required.';
-      } else {
-        alertMessage += `Error: ${errorMessage}`;
-      }
-      
-      alert(alertMessage);
-      
-      // Refresh to revert to actual database state
+      console.error('Error updating quantity:', err);
+      setError('Failed to update quantity. Please try again.');
+      // Revert on error
       fetchResources();
-      setPendingQuantityChanges({});
-    } finally {
-      setIsSaving(false);
-    }
-  };
-
-  const handleCancelQuantityChanges = () => {
-    if (Object.keys(pendingQuantityChanges).length === 0) return;
-
-    if (window.confirm('Discard all pending quantity changes?')) {
-      setPendingQuantityChanges({});
     }
   };
 
@@ -354,8 +298,7 @@ function Inventory({ userRole }: InventoryProps) {
         onReserve={handleReserve}
         onToggleResourceSelection={handleToggleResourceSelection}
         onClearFilters={clearFilters}
-        onQuantityChange={userRole === 'admin' ? handleQuantityChange : undefined}
-        pendingQuantityChanges={pendingQuantityChanges}
+        onQuantityUpdate={userRole === 'admin' ? handleQuantityUpdate : undefined}
       />
 
       {userRole === 'admin' && Object.keys(pendingQuantityChanges).length > 0 && (
