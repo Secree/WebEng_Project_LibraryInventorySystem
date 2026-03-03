@@ -96,24 +96,47 @@ function Inventory({ userRole }: InventoryProps) {
   };
 
   const handleQuantityUpdate = async (resourceId: string, newQuantity: number) => {
+    setResources((prevResources) =>
+      prevResources.map((resource) =>
+        resource.id === resourceId ? { ...resource, quantity: newQuantity } : resource
+      )
+    );
+
+    setPendingQuantityChanges((prevChanges) => ({
+      ...prevChanges,
+      [resourceId]: newQuantity,
+    }));
+  };
+
+  const handleConfirmQuantityChanges = async () => {
+    const pendingEntries = Object.entries(pendingQuantityChanges);
+    if (pendingEntries.length === 0) {
+      return;
+    }
+
+    setIsSaving(true);
+    setError('');
+
     try {
-      // Optimistically update the UI
-      setResources(prevResources =>
-        prevResources.map(resource =>
-          resource.id === resourceId
-            ? { ...resource, quantity: newQuantity }
-            : resource
+      await Promise.all(
+        pendingEntries.map(([resourceId, quantity]) =>
+          updateResource(resourceId, { quantity })
         )
       );
-
-      // Update the backend
-      await updateResource(resourceId, { quantity: newQuantity });
+      setPendingQuantityChanges({});
     } catch (err: any) {
-      console.error('Error updating quantity:', err);
-      setError('Failed to update quantity. Please try again.');
-      // Revert on error
+      console.error('Error confirming quantity changes:', err);
+      setError('Failed to save quantity changes. Please try again.');
       fetchResources();
+      setPendingQuantityChanges({});
+    } finally {
+      setIsSaving(false);
     }
+  };
+
+  const handleCancelQuantityChanges = () => {
+    setPendingQuantityChanges({});
+    fetchResources();
   };
 
   const searchMatchedResources = useMemo(() => {
