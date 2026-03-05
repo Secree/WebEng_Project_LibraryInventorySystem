@@ -89,8 +89,8 @@ function Inventory({ userRole }: InventoryProps) {
   const [showFloatingCartActions, setShowFloatingCartActions] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  // const [pendingQuantityChanges, setPendingQuantityChanges] = useState<Record<string, number>>({});
-  // const [isSaving, setIsSaving] = useState(false);
+  const [pendingQuantityChanges, setPendingQuantityChanges] = useState<Record<string, number>>({});
+  const [isSaving, setIsSaving] = useState(false);
 
   // Fetch resources on mount
   useEffect(() => {
@@ -152,33 +152,27 @@ function Inventory({ userRole }: InventoryProps) {
     setError('');
 
     try {
-      // Optimistically update the UI
-      setResources(prevResources =>
-        prevResources.map(resource =>
-          resource.id === resourceId
-            ? { ...resource, quantity: newQuantity, status: newQuantity > 0 ? 'available' : 'reserved' }
-            : resource
+      // Update all pending changes
+      await Promise.all(
+        pendingEntries.map(([resourceId, quantity]) =>
+          updateResource(resourceId, { quantity })
         )
       );
 
-      // Update the backend
-      const updatedResource = await updateResource(resourceId, { quantity: newQuantity });
-
-      setResources(prevResources =>
-        prevResources.map(resource =>
-          resource.id === resourceId
-            ? updatedResource
-            : resource
-        )
-      );
+      setPendingQuantityChanges({});
+      await fetchResources();
     } catch (err: any) {
       console.error('Error confirming quantity changes:', err);
       setError('Failed to save quantity changes. Please try again.');
       fetchResources();
-      setPendingQuantityChanges({});
     } finally {
       setIsSaving(false);
     }
+  };
+
+  const handleCancelQuantityChanges = () => {
+    setPendingQuantityChanges({});
+    fetchResources();
   };
 
   const handleSaveNewResource = async (resourceData: any) => {
@@ -191,9 +185,6 @@ function Inventory({ userRole }: InventoryProps) {
       console.error('Error creating resource:', err);
       throw err; // Re-throw to let the modal handle it
     }
-  const handleCancelQuantityChanges = () => {
-    setPendingQuantityChanges({});
-    fetchResources();
   };
 
   const searchMatchedResources = useMemo(() => {
@@ -497,6 +488,34 @@ function Inventory({ userRole }: InventoryProps) {
         onClearFilters={clearFilters}
         onQuantityUpdate={userRole === 'admin' ? handleQuantityUpdate : undefined}
       />
+
+      {userRole === 'admin' && Object.keys(pendingQuantityChanges).length > 0 && (
+        <div className={styles.quantityConfirmationBar}>
+          <div className={styles.confirmationContent}>
+            <p className={styles.confirmationText}>
+              {Object.keys(pendingQuantityChanges).length} item{Object.keys(pendingQuantityChanges).length > 1 ? 's' : ''} pending changes
+            </p>
+            <div className={styles.confirmationButtons}>
+              <button
+                type="button"
+                className={styles.confirmButton}
+                onClick={handleConfirmQuantityChanges}
+                disabled={isSaving}
+              >
+                {isSaving ? 'Saving...' : 'Confirm Changes'}
+              </button>
+              <button
+                type="button"
+                className={styles.cancelChangesButton}
+                onClick={handleCancelQuantityChanges}
+                disabled={isSaving}
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {userRole === 'user' && isMultiSelectMode && showFloatingCartActions && (
         <div className={styles.floatingCartBar}>
