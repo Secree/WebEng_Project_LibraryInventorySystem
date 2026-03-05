@@ -1,12 +1,18 @@
 import { useState, useEffect, useMemo } from 'react';
-import { getAllResources, updateResource } from '../../services/api';
+import { getAllResources, reserveResource, updateResource } from '../../services/api';
 import styles from './Inventory.module.css';
 import SearchToolbar from '../../components/inventory/SearchToolbar/SearchToolbar';
 import ResourceGrid from '../../components/inventory/ResourceGrid';
 import CheckoutModal from '../../components/inventory/CheckoutModal';
 import MultiCheckoutModal from '../../components/inventory/MultiCheckoutModal';
 import CartOverviewModal from '../../components/inventory/CartOverviewModal';
-import type { Resource } from '../../components/inventory/types';
+import type {
+  MultiReservationFailureItem,
+  MultiReservationReceipt,
+  MultiReservationReceiptItem,
+  Resource,
+  ReservationReceipt,
+} from '../../components/inventory/types';
 
 interface InventoryProps {
   userRole?: string;
@@ -15,6 +21,32 @@ interface InventoryProps {
 type FilterTab = 'All' | 'Books' | 'Modules' | 'Equipment';
 
 const FILTER_TABS: FilterTab[] = ['All', 'Books', 'Modules', 'Equipment'];
+const MAX_BORROW_DURATION_DAYS = 14;
+
+const parseDateValue = (dateValue: string) => {
+  const direct = new Date(dateValue);
+  if (!Number.isNaN(direct.getTime())) {
+    return direct;
+  }
+
+  const fallback = new Date(`${dateValue}T00:00:00`);
+  if (!Number.isNaN(fallback.getTime())) {
+    return fallback;
+  }
+
+  return null;
+};
+
+const getDueDateFromBorrowDate = (borrowDate: string) => {
+  const parsedDate = parseDateValue(borrowDate);
+  if (!parsedDate) {
+    return borrowDate;
+  }
+
+  const dueDate = new Date(parsedDate);
+  dueDate.setDate(dueDate.getDate() + MAX_BORROW_DURATION_DAYS);
+  return dueDate.toISOString();
+};
 
 const mapResourceToTab = (resource: Resource): Exclude<FilterTab, 'All'> => {
   // Use category (actual material type from CSV) if available, otherwise fall back to type
@@ -116,6 +148,34 @@ function Inventory({ userRole }: InventoryProps) {
     }
   };
 
+  const handleConfirmQuantityChanges = async () => {
+    if (Object.keys(pendingQuantityChanges).length === 0) {
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      await Promise.all(
+        Object.entries(pendingQuantityChanges).map(([resourceId, quantity]) =>
+          updateResource(resourceId, { quantity })
+        )
+      );
+      setPendingQuantityChanges({});
+      await fetchResources();
+      setError('');
+    } catch (err: any) {
+      console.error('Error saving quantity changes:', err);
+      setError('Failed to save quantity changes. Please try again.');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleCancelQuantityChanges = () => {
+    setPendingQuantityChanges({});
+    fetchResources();
+  };
+
   const searchMatchedResources = useMemo(() => {
     let filtered = [...resources];
 
@@ -207,9 +267,38 @@ function Inventory({ userRole }: InventoryProps) {
     setCheckoutResource(null);
   };
 
-  const handleConfirmSingleCheckout = (resourceId: string, borrowDate: string) => {
-    alert(`Checkout submitted for resource: ${resourceId} on ${borrowDate}`);
-    handleCloseCheckoutModal();
+  const handleConfirmSingleCheckout = async (
+    resourceId: string,
+    borrowDate: string
+  ): Promise<ReservationReceipt> => {
+    try {
+      const response = await reserveResource(resourceId, borrowDate);
+
+      setResources((prevResources) =>
+        prevResources.map((resource) =>
+          resource.id === response.resource.id ? response.resource : resource
+        )
+      );
+      setError('');
+
+      const fallbackResourceTitle = resources.find((resource) => resource.id === resourceId)?.title || 'Resource';
+
+      return {
+        reservationId: response.reservation.id,
+        resourceTitle: response.reservation.resourceTitle || fallbackResourceTitle,
+        borrowDate: response.reservation.reservationDate || borrowDate,
+        dueDate: response.reservation.dueDate || getDueDateFromBorrowDate(borrowDate),
+        status: response.reservation.status || 'pending',
+        submittedAt: response.reservation.createdAt || new Date().toISOString(),
+      };
+    } catch (err: any) {
+      const message =
+        err?.response?.data?.error ||
+        err?.response?.data?.message ||
+        'Failed to submit reservation. Please try again.';
+
+      throw new Error(message);
+    }
   };
 
   const handleRemoveFromCart = (resourceId: string) => {
@@ -241,12 +330,80 @@ function Inventory({ userRole }: InventoryProps) {
     setMultiCheckoutResources([]);
   };
 
-  const handleConfirmMultiCheckout = (borrowDate: string) => {
-    alert(`Checkout submitted for ${multiCheckoutResources.length} item(s) on ${borrowDate}.`);
-    setCartResourceIds((prev) =>
-      prev.filter((id) => !multiCheckoutResources.some((item) => item.id === id))
+  const handleConfirmMultiCheckout = async (borrowDate: string): Promise<MultiReservationReceipt> => {
+    const selectedResources = [...multiCheckoutResources];
+    const results = await Promise.allSettled(
+      selectedResources.map((resource) => reserveResource(resource.id, borrowDate))
     );
-    handleCloseMultiCheckoutModal();
+
+    const successfulItems: MultiReservationReceiptItem[] = [];
+    const failedItems: MultiReservationFailureItem[] = [];
+    const updatedResourcesById = new Map<string, Resource>();
+
+    let resolvedBorrowDate = borrowDate;
+    let resolvedDueDate = getDueDateFromBorrowDate(borrowDate);
+    let resolvedSubmittedAt = new Date().toISOString();
+
+    results.forEach((result, index) => {
+      const currentResource = selectedResources[index];
+
+      if (result.status === 'fulfilled') {
+        const payload = result.value;
+
+        successfulItems.push({
+          reservationId: payload.reservation.id,
+          resourceId: currentResource.id,
+          resourceTitle: payload.reservation.resourceTitle || currentResource.title,
+          status: payload.reservation.status || 'pending',
+        });
+
+        updatedResourcesById.set(payload.resource.id, payload.resource);
+
+        if (payload.reservation.reservationDate) {
+          resolvedBorrowDate = payload.reservation.reservationDate;
+        }
+        if (payload.reservation.dueDate) {
+          resolvedDueDate = payload.reservation.dueDate;
+        }
+        if (payload.reservation.createdAt) {
+          resolvedSubmittedAt = payload.reservation.createdAt;
+        }
+
+        return;
+      }
+
+      const reason =
+        result.reason?.response?.data?.error ||
+        result.reason?.response?.data?.message ||
+        result.reason?.message ||
+        'Failed to submit reservation.';
+
+      failedItems.push({
+        resourceId: currentResource.id,
+        resourceTitle: currentResource.title,
+        reason,
+      });
+    });
+
+    if (successfulItems.length === 0) {
+      throw new Error(failedItems[0]?.reason || 'Failed to submit reservations. Please try again.');
+    }
+
+    setResources((prevResources) =>
+      prevResources.map((resource) => updatedResourcesById.get(resource.id) || resource)
+    );
+
+    const successfulResourceIds = new Set(successfulItems.map((item) => item.resourceId));
+    setCartResourceIds((prev) => prev.filter((id) => !successfulResourceIds.has(id)));
+    setError('');
+
+    return {
+      borrowDate: resolvedBorrowDate,
+      dueDate: resolvedDueDate,
+      submittedAt: resolvedSubmittedAt,
+      successfulItems,
+      failedItems,
+    };
   };
 
   const clearFilters = () => {

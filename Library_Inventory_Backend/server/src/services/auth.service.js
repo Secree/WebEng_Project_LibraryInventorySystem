@@ -50,7 +50,7 @@ const authService = {
       const token = jwt.sign(
         { id: returnedUser.id, name: returnedUser.name, email: returnedUser.email, role: returnedUser.role },
         process.env.JWT_SECRET || 'defaultsecret',
-        { expiresIn: '1h' }
+        { expiresIn: '7d' }
       );
 
       return { ...returnedUser, token };
@@ -91,7 +91,7 @@ const authService = {
       const token = jwt.sign(
         { id: returnedUser.id, name: returnedUser.name, email: returnedUser.email, role: returnedUser.role },
         process.env.JWT_SECRET || 'defaultsecret',
-        { expiresIn: '1h' }
+        { expiresIn: '7d' }
       );
 
       return { ...returnedUser, token };

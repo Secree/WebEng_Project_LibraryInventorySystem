@@ -1,8 +1,6 @@
-// Reservation controller
-const reservationService = require('../services/reservation.service');
+import reservationService from '../services/reservation.service.js';
 
 const reservationController = {
-  // Get all reservations
   getAllReservations: async (req, res) => {
     try {
       const reservations = await reservationService.getAllReservations();
@@ -12,9 +10,22 @@ const reservationController = {
     }
   },
 
-  // Get reservation by ID
+  getMyReservations: async (req, res) => {
+    try {
+      const reservations = await reservationService.getReservationsByUserId(req.user?.id);
+      res.status(200).json(reservations);
+    } catch (error) {
+      res.status(400).json({ error: error.message });
+    }
+  },
+
   getReservationById: async (req, res) => {
     try {
+      if (req.params.id === 'mine') {
+        const reservations = await reservationService.getReservationsByUserId(req.user?.id);
+        return res.status(200).json(reservations);
+      }
+
       const reservation = await reservationService.getReservationById(req.params.id);
       res.status(200).json(reservation);
     } catch (error) {
@@ -22,17 +33,30 @@ const reservationController = {
     }
   },
 
-  // Create new reservation
   createReservation: async (req, res) => {
     try {
-      const reservation = await reservationService.createReservation(req.body);
-      res.status(201).json(reservation);
+      const result = await reservationService.createReservation(req.body, req.user);
+      res.status(201).json({
+        message: 'Reservation created successfully',
+        ...result
+      });
     } catch (error) {
       res.status(400).json({ error: error.message });
     }
   },
 
-  // Update reservation
+  cancelReservation: async (req, res) => {
+    try {
+      const result = await reservationService.cancelReservation(req.params.id, req.user);
+      res.status(200).json({
+        message: 'Reservation cancelled successfully',
+        ...result
+      });
+    } catch (error) {
+      res.status(400).json({ error: error.message });
+    }
+  },
+
   updateReservation: async (req, res) => {
     try {
       const reservation = await reservationService.updateReservation(req.params.id, req.body);
@@ -42,7 +66,6 @@ const reservationController = {
     }
   },
 
-  // Delete reservation
   deleteReservation: async (req, res) => {
     try {
       await reservationService.deleteReservation(req.params.id);
@@ -53,4 +76,4 @@ const reservationController = {
   }
 };
 
-module.exports = reservationController;
+export default reservationController;

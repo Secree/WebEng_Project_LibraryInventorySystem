@@ -88,9 +88,8 @@ const reservationSchema = new mongoose.Schema({
 });
 
 // Update timestamp on save
-reservationSchema.pre('save', function(next) {
+reservationSchema.pre('save', function() {
   this.updatedAt = Date.now();
-  next();
 });
 
 export default mongoose.model('Reservation', reservationSchema);
