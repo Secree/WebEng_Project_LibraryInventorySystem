@@ -34,9 +34,21 @@ const reservationSchema = new mongoose.Schema({
     type: String,
     required: true
   },
+  requestedQuantity: {
+    type: Number,
+    required: true,
+    default: 1,
+    min: 1,
+    validate: {
+      validator(value) {
+        return Number.isInteger(value) && value >= 1;
+      },
+      message: 'Requested quantity must be a positive whole number.'
+    }
+  },
   status: {
     type: String,
-    enum: ['pending', 'approved', 'rejected', 'returned', 'cancelled'],
+    enum: ['pending', 'approved', 'rejected', 'returned', 'cancelled', 'cancel_requested'],
     default: 'pending'
   },
   reservationDate: {
@@ -88,9 +100,8 @@ const reservationSchema = new mongoose.Schema({
 });
 
 // Update timestamp on save
-reservationSchema.pre('save', function(next) {
+reservationSchema.pre('save', function() {
   this.updatedAt = Date.now();
-  next();
 });
 
 export default mongoose.model('Reservation', reservationSchema);

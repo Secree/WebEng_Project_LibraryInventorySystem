@@ -1,3 +1,9 @@
 {
-    "vscode-pets.theme": "forest"
+    "vscode-pets.theme": "forest",
+    "mdb.presetConnections": [
+        {
+            "name": "Preset Connection",
+            "connectionString": "mongodb://localhost:27017"
+        }
+    ]
 }

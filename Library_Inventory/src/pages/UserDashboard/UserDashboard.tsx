@@ -1,4 +1,5 @@
 import Inventory from '../Inventory/Inventory';
+import MyReservations from './MyReservations';
 import styles from './UserDashboard.module.css';
 import logo from '../../assets/images/MAES-logo.png';
 import { useState } from 'react';
@@ -10,6 +11,7 @@ interface UserDashboardProps {
 
 function UserDashboard({ user, onLogout }: UserDashboardProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [activeView, setActiveView] = useState<'inventory' | 'reservations'>('inventory');
 
   const handleLogout = () => {
     setSidebarOpen(false);
@@ -44,8 +46,24 @@ function UserDashboard({ user, onLogout }: UserDashboardProps) {
           </button>
         </div>
       </div>
+      <div className={styles.viewTabs}>
+        <button
+          type="button"
+          className={`${styles.viewTabButton} ${activeView === 'inventory' ? styles.viewTabButtonActive : ''}`}
+          onClick={() => setActiveView('inventory')}
+        >
+          Inventory
+        </button>
+        <button
+          type="button"
+          className={`${styles.viewTabButton} ${activeView === 'reservations' ? styles.viewTabButtonActive : ''}`}
+          onClick={() => setActiveView('reservations')}
+        >
+          My Reservations
+        </button>
+      </div>
       <div className={styles.body}>
-        <Inventory userRole="user" />
+        {activeView === 'inventory' ? <Inventory userRole="user" /> : <MyReservations />}
       </div>
     </div>
   );
