@@ -130,6 +130,27 @@ function Inventory({ userRole }: InventoryProps) {
   };
 
   const handleQuantityUpdate = async (resourceId: string, newQuantity: number) => {
+    setResources((prevResources) =>
+      prevResources.map((resource) =>
+        resource.id === resourceId ? { ...resource, quantity: newQuantity } : resource
+      )
+    );
+
+    setPendingQuantityChanges((prevChanges) => ({
+      ...prevChanges,
+      [resourceId]: newQuantity,
+    }));
+  };
+
+  const handleConfirmQuantityChanges = async () => {
+    const pendingEntries = Object.entries(pendingQuantityChanges);
+    if (pendingEntries.length === 0) {
+      return;
+    }
+
+    setIsSaving(true);
+    setError('');
+
     try {
       // Optimistically update the UI
       setResources(prevResources =>
@@ -151,10 +172,12 @@ function Inventory({ userRole }: InventoryProps) {
         )
       );
     } catch (err: any) {
-      console.error('Error updating quantity:', err);
-      setError('Failed to update quantity. Please try again.');
-      // Revert on error
+      console.error('Error confirming quantity changes:', err);
+      setError('Failed to save quantity changes. Please try again.');
       fetchResources();
+      setPendingQuantityChanges({});
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -168,6 +191,9 @@ function Inventory({ userRole }: InventoryProps) {
       console.error('Error creating resource:', err);
       throw err; // Re-throw to let the modal handle it
     }
+  const handleCancelQuantityChanges = () => {
+    setPendingQuantityChanges({});
+    fetchResources();
   };
 
   const searchMatchedResources = useMemo(() => {
