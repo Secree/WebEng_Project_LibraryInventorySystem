@@ -39,9 +39,15 @@ const resourceService = {
   // Update resource
   updateResource: async (id, resourceData) => {
     try {
+      const nextResourceData = { ...resourceData };
+
+      if (typeof nextResourceData.quantity === 'number') {
+        nextResourceData.status = nextResourceData.quantity > 0 ? 'available' : 'reserved';
+      }
+
       const resource = await Resource.findByIdAndUpdate(
         id,
-        resourceData,
+        nextResourceData,
         { new: true, runValidators: true }
       );
       

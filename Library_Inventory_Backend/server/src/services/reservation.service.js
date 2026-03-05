@@ -23,6 +23,20 @@ const assertObjectId = (value, label) => {
   }
 };
 
+const ensureAdmin = (currentUser) => {
+  if (!currentUser || currentUser.role !== 'admin') {
+    throw new Error('Admin access required');
+  }
+};
+
+const syncResourceStatusFromQuantity = (resource) => {
+  if (!resource) {
+    return;
+  }
+
+  resource.status = resource.quantity > 0 ? 'available' : 'reserved';
+};
+
 const normalizeReservation = (reservationDoc) => {
   const reservation = reservationDoc?.toObject ? reservationDoc.toObject() : reservationDoc;
 
@@ -37,9 +51,36 @@ const normalizeReservation = (reservationDoc) => {
   };
 };
 
+const restoreResourceAndDeleteReservation = async (reservation) => {
+  const resource = await Resource.findById(reservation.resourceId);
+  if (resource) {
+    resource.quantity = Math.max(0, resource.quantity + 1);
+    syncResourceStatusFromQuantity(resource);
+    await resource.save();
+  }
+
+  await reservation.deleteOne();
+
+  return {
+    deletedReservationId: reservation._id.toString(),
+    resource: resource ? resource.toJSON() : null
+  };
+};
+
+const deleteReservationWithoutRestoring = async (reservation) => {
+  await reservation.deleteOne();
+
+  return {
+    deletedReservationId: reservation._id.toString(),
+    resource: null
+  };
+};
+
 const reservationService = {
-  getAllReservations: async () => {
+  getAllReservations: async (currentUser) => {
     try {
+      ensureAdmin(currentUser);
+
       const reservations = await Reservation.find({}).sort({ createdAt: -1 });
       return reservations.map((reservation) => normalizeReservation(reservation));
     } catch (error) {
@@ -129,10 +170,6 @@ const reservationService = {
 
       await reservation.save();
 
-      resource.quantity = Math.max(0, resource.quantity - 1);
-      resource.status = resource.quantity > 0 ? 'available' : 'reserved';
-      await resource.save();
-
       return {
         reservation: normalizeReservation(reservation),
         resource: resource.toJSON()
@@ -142,7 +179,7 @@ const reservationService = {
     }
   },
 
-  cancelReservation: async (id, currentUser) => {
+  requestCancellation: async (id, currentUser) => {
     try {
       if (!currentUser?.id) {
         throw new Error('Authenticated user is required');
@@ -164,26 +201,127 @@ const reservationService = {
         throw new Error('Reservation is already cancelled');
       }
 
-      if (!['pending', 'approved'].includes(reservation.status)) {
-        throw new Error('Only pending or approved reservations can be cancelled');
+      if (reservation.status === 'cancel_requested') {
+        throw new Error('Cancellation request is already pending admin confirmation');
       }
 
-      reservation.status = 'cancelled';
+      if (reservation.status !== 'pending') {
+        throw new Error('Only pending reservations can request cancellation');
+      }
+
+      reservation.status = 'cancel_requested';
       await reservation.save();
-
-      const resource = await Resource.findById(reservation.resourceId);
-      if (resource) {
-        resource.quantity = Math.max(0, resource.quantity + 1);
-        resource.status = 'available';
-        await resource.save();
-      }
 
       return {
         reservation: normalizeReservation(reservation),
-        resource: resource ? resource.toJSON() : null
+        resource: null
       };
     } catch (error) {
-      throw new Error(`Failed to cancel reservation: ${error.message}`);
+      throw new Error(`Failed to request cancellation: ${error.message}`);
+    }
+  },
+
+  adminCancelApprovedReservation: async (id, currentUser) => {
+    try {
+      ensureAdmin(currentUser);
+      assertObjectId(id, 'reservation id');
+
+      const reservation = await Reservation.findById(id);
+      if (!reservation) {
+        throw new Error('Reservation not found');
+      }
+
+      if (reservation.status !== 'approved') {
+        throw new Error('Only approved reservations can be cancelled by admin');
+      }
+
+      return restoreResourceAndDeleteReservation(reservation);
+    } catch (error) {
+      throw new Error(`Failed to cancel approved reservation: ${error.message}`);
+    }
+  },
+
+  approveReservation: async (id, currentUser) => {
+    try {
+      ensureAdmin(currentUser);
+      assertObjectId(id, 'reservation id');
+
+      const reservation = await Reservation.findById(id);
+      if (!reservation) {
+        throw new Error('Reservation not found');
+      }
+
+      if (reservation.status !== 'pending') {
+        throw new Error('Only pending reservations can be approved');
+      }
+
+      const resource = await Resource.findById(reservation.resourceId);
+      if (!resource) {
+        throw new Error('Resource not found');
+      }
+      if (resource.quantity <= 0 || resource.status !== 'available') {
+        throw new Error('Resource is no longer available for approval');
+      }
+
+      resource.quantity = Math.max(0, resource.quantity - 1);
+      syncResourceStatusFromQuantity(resource);
+      await resource.save();
+
+      reservation.status = 'approved';
+      await reservation.save();
+
+      return {
+        reservation: normalizeReservation(reservation)
+      };
+    } catch (error) {
+      throw new Error(`Failed to approve reservation: ${error.message}`);
+    }
+  },
+
+  confirmCancelAndDelete: async (id, currentUser) => {
+    try {
+      ensureAdmin(currentUser);
+      assertObjectId(id, 'reservation id');
+
+      const reservation = await Reservation.findById(id);
+      if (!reservation) {
+        throw new Error('Reservation not found');
+      }
+
+      if (reservation.status !== 'cancel_requested') {
+        throw new Error('Reservation is not awaiting cancellation confirmation');
+      }
+
+      return deleteReservationWithoutRestoring(reservation);
+    } catch (error) {
+      throw new Error(`Failed to confirm cancellation: ${error.message}`);
+    }
+  },
+
+  purgeCancelledReservations: async (currentUser) => {
+    try {
+      ensureAdmin(currentUser);
+
+      const cancellableReservations = await Reservation.find({
+        status: { $in: ['cancelled', 'cancel_requested'] }
+      });
+
+      const results = [];
+
+      for (const reservation of cancellableReservations) {
+        const shouldRestore = reservation.status === 'approved' || reservation.status === 'cancelled';
+        const result = shouldRestore
+          ? await restoreResourceAndDeleteReservation(reservation)
+          : await deleteReservationWithoutRestoring(reservation);
+        results.push(result);
+      }
+
+      return {
+        deletedCount: results.length,
+        deletedReservationIds: results.map((item) => item.deletedReservationId),
+      };
+    } catch (error) {
+      throw new Error(`Failed to purge cancelled reservations: ${error.message}`);
     }
   },
 

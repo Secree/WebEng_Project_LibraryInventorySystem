@@ -21,6 +21,10 @@ const formatStatus = (status: string) => {
     return 'Pending';
   }
 
+  if (status.toLowerCase() === 'cancel_requested') {
+    return 'Cancellation Requested';
+  }
+
   return `${status.charAt(0).toUpperCase()}${status.slice(1)}`;
 };
 
@@ -29,6 +33,9 @@ const getStatusClassName = (status: string) => {
 
   if (normalized === 'approved') {
     return styles.reservationStatusApproved;
+  }
+  if (normalized === 'cancel_requested') {
+    return styles.reservationStatusCancelRequested;
   }
   if (normalized === 'rejected' || normalized === 'cancelled') {
     return styles.reservationStatusRejected;
@@ -42,7 +49,7 @@ const getStatusClassName = (status: string) => {
 
 const isCancellableStatus = (status: string) => {
   const normalized = (status || '').toLowerCase();
-  return normalized === 'pending' || normalized === 'approved';
+  return normalized === 'pending';
 };
 
 function MyReservations() {
@@ -71,7 +78,7 @@ function MyReservations() {
   };
 
   const handleCancelReservation = async (reservationId: string) => {
-    const shouldContinue = window.confirm('Cancel this reservation?');
+    const shouldContinue = window.confirm('Send cancellation request to admin?');
     if (!shouldContinue) {
       return;
     }
@@ -155,7 +162,7 @@ function MyReservations() {
                     onClick={() => handleCancelReservation(reservation.id)}
                     disabled={cancellingId === reservation.id}
                   >
-                    {cancellingId === reservation.id ? 'Cancelling...' : 'Cancel Reservation'}
+                    {cancellingId === reservation.id ? 'Submitting...' : 'Request Cancellation'}
                   </button>
                 </div>
               )}

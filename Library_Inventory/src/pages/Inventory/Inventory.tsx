@@ -133,13 +133,21 @@ function Inventory({ userRole }: InventoryProps) {
       setResources(prevResources =>
         prevResources.map(resource =>
           resource.id === resourceId
-            ? { ...resource, quantity: newQuantity }
+            ? { ...resource, quantity: newQuantity, status: newQuantity > 0 ? 'available' : 'reserved' }
             : resource
         )
       );
 
       // Update the backend
-      await updateResource(resourceId, { quantity: newQuantity });
+      const updatedResource = await updateResource(resourceId, { quantity: newQuantity });
+
+      setResources(prevResources =>
+        prevResources.map(resource =>
+          resource.id === resourceId
+            ? updatedResource
+            : resource
+        )
+      );
     } catch (err: any) {
       console.error('Error updating quantity:', err);
       setError('Failed to update quantity. Please try again.');

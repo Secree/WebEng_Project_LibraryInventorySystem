@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import Inventory from '../Inventory/Inventory';
+import AdminReservations from './AdminReservations';
 import styles from './AdminDashboard.module.css';
 import logo from '../../assets/images/MAES-logo.png';
 import { getAllUsers as fetchAllUsers, deleteUser as deleteUserApi } from '../../services/api';
@@ -20,7 +21,7 @@ function AdminDashboard({ user, onLogout }: AdminDashboardProps) {
   const [users, setUsers] = useState<User[]>([]);
   const [message, setMessage] = useState('');
   const [loading, setLoading] = useState(false);
-  const [activeTab, setActiveTab] = useState<'inventory' | 'users'>('inventory');
+  const [activeTab, setActiveTab] = useState<'inventory' | 'users' | 'reservations'>('inventory');
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const fetchUsers = async () => {
@@ -68,6 +69,11 @@ function AdminDashboard({ user, onLogout }: AdminDashboardProps) {
     setActiveTab('users');
   };
 
+  const handleReservationManagement = () => {
+    setSidebarOpen(false);
+    setActiveTab('reservations');
+  };
+
   const handleLogout = () => {
     setSidebarOpen(false);
     onLogout();
@@ -96,6 +102,12 @@ function AdminDashboard({ user, onLogout }: AdminDashboardProps) {
           >
             User Management
           </button>
+          <button
+            onClick={() => setActiveTab('reservations')}
+            className={`${styles.userManagement} ${activeTab === 'reservations' ? styles.active : ''}`}
+          >
+            Reservation Management
+          </button>
           <button onClick={onLogout} className={styles.logoutBTN}>
             Logout
           </button>
@@ -120,6 +132,12 @@ function AdminDashboard({ user, onLogout }: AdminDashboardProps) {
           >
             User Management
           </button>
+          <button
+            onClick={handleReservationManagement}
+            className={`${styles.userManagement} ${activeTab === 'reservations' ? styles.active : ''}`}
+          >
+            Reservation Management
+          </button>
           <button onClick={handleLogout} className={styles.logoutBTN}>
             Logout
           </button>
@@ -128,7 +146,7 @@ function AdminDashboard({ user, onLogout }: AdminDashboardProps) {
       <div className={styles.body}>
         {activeTab === 'inventory' ? (
           <Inventory userRole="admin" />
-        ) : (
+        ) : activeTab === 'users' ? (
           <div className={styles.userManagementContainer}>
             <div className={styles.userManagementTable}>
               <div className={styles.userTitle}>
@@ -194,6 +212,8 @@ function AdminDashboard({ user, onLogout }: AdminDashboardProps) {
               )}
             </div>
           </div>
+        ) : (
+          <AdminReservations />
         )}
       </div>
     </div>

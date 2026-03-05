@@ -97,6 +97,36 @@ export interface CancelReservationResponse {
   resource: Resource | null;
 }
 
+export interface AdminReservation {
+  id: string;
+  userId: string;
+  userEmail: string;
+  resourceId: string;
+  resourceTitle: string;
+  status: string;
+  reservationDate: string;
+  dueDate: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface AdminConfirmCancelResponse {
+  message: string;
+  deletedReservationId: string;
+  resource: Resource | null;
+}
+
+export interface AdminApproveReservationResponse {
+  message: string;
+  reservation: ReservationRecord;
+}
+
+export interface AdminCancelApprovedReservationResponse {
+  message: string;
+  deletedReservationId: string;
+  resource: Resource | null;
+}
+
 // Resource API functions
 export const getAllResources = async () => {
   const response = await api.get('/resources');
@@ -140,6 +170,26 @@ export const getMyReservations = async () => {
 export const cancelReservation = async (reservationId: string) => {
   const response = await api.patch(`/reservations/${reservationId}/cancel`);
   return response.data as CancelReservationResponse;
+};
+
+export const getAdminReservations = async () => {
+  const response = await api.get('/reservations/admin');
+  return response.data as AdminReservation[];
+};
+
+export const adminConfirmCancelReservation = async (reservationId: string) => {
+  const response = await api.delete(`/reservations/${reservationId}/admin-confirm-cancel`);
+  return response.data as AdminConfirmCancelResponse;
+};
+
+export const adminApproveReservation = async (reservationId: string) => {
+  const response = await api.patch(`/reservations/${reservationId}/approve`);
+  return response.data as AdminApproveReservationResponse;
+};
+
+export const adminCancelApprovedReservation = async (reservationId: string) => {
+  const response = await api.delete(`/reservations/${reservationId}/admin-cancel-approved`);
+  return response.data as AdminCancelApprovedReservationResponse;
 };
 
 // Admin API functions
