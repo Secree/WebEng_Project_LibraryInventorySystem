@@ -55,8 +55,8 @@ function Inventory({ userRole }: InventoryProps) {
   const [showFloatingCartActions, setShowFloatingCartActions] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [pendingQuantityChanges, setPendingQuantityChanges] = useState<Record<string, number>>({});
-  const [isSaving, setIsSaving] = useState(false);
+  // const [pendingQuantityChanges, setPendingQuantityChanges] = useState<Record<string, number>>({});
+  // const [isSaving, setIsSaving] = useState(false);
 
   // Fetch resources on mount
   useEffect(() => {
@@ -301,7 +301,7 @@ function Inventory({ userRole }: InventoryProps) {
         onQuantityUpdate={userRole === 'admin' ? handleQuantityUpdate : undefined}
       />
 
-      {userRole === 'admin' && Object.keys(pendingQuantityChanges).length > 0 && (
+      {/* {userRole === 'admin' && Object.keys(pendingQuantityChanges).length > 0 && (
         <div className={styles.quantityConfirmationBar}>
           <div className={styles.confirmationContent}>
             <p className={styles.confirmationText}>
@@ -327,7 +327,7 @@ function Inventory({ userRole }: InventoryProps) {
             </div>
           </div>
         </div>
-      )}
+      )} */}
 
       {userRole === 'user' && isMultiSelectMode && showFloatingCartActions && (
         <div className={styles.floatingCartBar}>
