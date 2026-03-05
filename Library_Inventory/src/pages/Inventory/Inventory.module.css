@@ -19,6 +19,11 @@
 .header {
   text-align: center;
   margin-bottom: 18px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
 }
 
 .header h1 {
@@ -32,33 +37,62 @@
   font-size: 18px;
 }
 
+.addResourceButton {
+  background-color: var(--inv-primary);
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.addResourceButton:hover {
+  background-color: var(--inv-primary-dark);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(47, 102, 216, 0.3);
+}
+
 @media (max-width: 1000px) {
   .header {
     margin: 0;
+    flex-direction: column;
+    text-align: center;
   }
-  .header,
+  .header h1,
   .subtitle {
     font-size: small;
   }
   .subtitle {
     font-size: x-small;
   }
+  .addResourceButton {
+    font-size: 14px;
+    padding: 10px 20px;
+  }
   @media (max-width: 600px) {
     .header {
       margin: 0;
     }
-    .header,
+    .header h1,
     .subtitle {
       font-size: x-small;
     }
     .subtitle {
       font-size: xx-small;
-    }     
+    }
+    .addResourceButton {
+      font-size: 12px;
+      padding: 8px 16px;
+    }
     @media (max-width: 500px) {
-      .header,
+      .header h1,
       .subtitle {
         font-size: xx-small;
-      }    
+      }
     }
   }
 }
