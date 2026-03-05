@@ -158,34 +158,6 @@ function Inventory({ userRole }: InventoryProps) {
     }
   };
 
-  const handleConfirmQuantityChanges = async () => {
-    if (Object.keys(pendingQuantityChanges).length === 0) {
-      return;
-    }
-
-    setIsSaving(true);
-    try {
-      await Promise.all(
-        Object.entries(pendingQuantityChanges).map(([resourceId, quantity]) =>
-          updateResource(resourceId, { quantity })
-        )
-      );
-      setPendingQuantityChanges({});
-      await fetchResources();
-      setError('');
-    } catch (err: any) {
-      console.error('Error saving quantity changes:', err);
-      setError('Failed to save quantity changes. Please try again.');
-    } finally {
-      setIsSaving(false);
-    }
-  };
-
-  const handleCancelQuantityChanges = () => {
-    setPendingQuantityChanges({});
-    fetchResources();
-  };
-
   const handleSaveNewResource = async (resourceData: any) => {
     try {
       const newResource = await createResource(resourceData);
