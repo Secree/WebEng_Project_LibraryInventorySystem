@@ -115,7 +115,7 @@ function ResourceGrid({
               <div className={styles.infoRow}>
                 <span className={styles.label}>Status:</span>
                 <span className={`${styles.status} ${styles[resource.status]}`}>
-                  {resource.status === 'available' ? '✓ Available' : '⚠ Reserved'}
+                  {resource.status === 'available' ? '✓ Available' : '⚠ Not Available'}
                 </span>
               </div>
 

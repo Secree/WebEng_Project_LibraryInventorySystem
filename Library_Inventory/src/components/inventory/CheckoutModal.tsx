@@ -1,6 +1,6 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import styles from '../../pages/Inventory/Inventory.module.css';
-import type { Resource } from './types';
+import type { ReservationReceipt, Resource } from './types';
 
 const MAX_RESERVATION_WINDOW_DAYS = 30;
 
@@ -8,13 +8,41 @@ interface CheckoutModalProps {
   isOpen: boolean;
   resource: Resource | null;
   onClose: () => void;
-  onConfirm: (resourceId: string, borrowDate: string) => void;
+  onConfirm: (resourceId: string, borrowDate: string, requestedQuantity: number) => Promise<ReservationReceipt>;
 }
+
+const formatDisplayDate = (value: string) => {
+  const direct = new Date(value);
+  if (!Number.isNaN(direct.getTime())) {
+    return direct.toDateString();
+  }
+
+  const fallback = new Date(`${value}T00:00:00`);
+  if (!Number.isNaN(fallback.getTime())) {
+    return fallback.toDateString();
+  }
+
+  return value;
+};
 
 function CheckoutModal({ isOpen, resource, onClose, onConfirm }: CheckoutModalProps) {
   const [borrowDate, setBorrowDate] = useState('');
+  const [requestedQuantity, setRequestedQuantity] = useState(1);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState('');
+  const [receipt, setReceipt] = useState<ReservationReceipt | null>(null);
 
-  if (!isOpen || !resource) return null;
+  useEffect(() => {
+    if (!isOpen) {
+      return;
+    }
+
+    setBorrowDate('');
+    setRequestedQuantity(1);
+    setIsSubmitting(false);
+    setSubmitError('');
+    setReceipt(null);
+  }, [isOpen, resource?.id]);
 
   const dueDateText = useMemo(() => {
     if (!borrowDate) return 'Select a borrow date first';
@@ -48,25 +76,58 @@ function CheckoutModal({ isOpen, resource, onClose, onConfirm }: CheckoutModalPr
     return !Number.isNaN(selected.getTime()) && selected >= minDate && selected <= maxDate;
   }, [borrowDate, maxBorrowDate, today]);
 
+  const isRequestedQuantityValid = useMemo(() => {
+    if (!resource) {
+      return false;
+    }
+
+    return requestedQuantity >= 1 && requestedQuantity <= resource.quantity;
+  }, [requestedQuantity, resource]);
+
   const handleClose = () => {
     setBorrowDate('');
+    setRequestedQuantity(1);
+    setIsSubmitting(false);
+    setSubmitError('');
+    setReceipt(null);
     onClose();
   };
 
-  const handleConfirm = () => {
-    if (!isBorrowDateValid) return;
-    onConfirm(resource.id, borrowDate);
-    setBorrowDate('');
+  const handleConfirm = async () => {
+    if (!isBorrowDateValid || !isRequestedQuantityValid || isSubmitting || !resource) return;
+
+    setIsSubmitting(true);
+    setSubmitError('');
+
+    try {
+      const result = await onConfirm(resource.id, borrowDate, requestedQuantity);
+      setReceipt(result);
+      setSubmitError('');
+    } catch (error: unknown) {
+      if (error instanceof Error && error.message) {
+        setSubmitError(error.message);
+      } else {
+        setSubmitError('Failed to submit reservation. Please try again.');
+      }
+    } finally {
+      setIsSubmitting(false);
+    }
   };
+
+  const isReceiptVisible = receipt !== null;
+
+  if (!isOpen || !resource) return null;
 
   return (
     <div className={styles.modalOverlay}>
       <div className={styles.modalContainer}>
         <div className={styles.modalHeader}>
           <div>
-            <h2 className={styles.modalTitle}>Review & Set Dates</h2>
+            <h2 className={styles.modalTitle}>{isReceiptVisible ? 'Reservation Submitted' : 'Review & Set Dates'}</h2>
             <p className={styles.modalSubtitle}>
-              Please review the item details and set your borrow period.
+              {isReceiptVisible
+                ? 'Your reservation was recorded successfully. Here is your receipt overview.'
+                : 'Please review the item details and set your borrow period.'}
             </p>
           </div>
           <button type="button" className={styles.modalCloseButton} onClick={handleClose}>
@@ -74,61 +135,137 @@ function CheckoutModal({ isOpen, resource, onClose, onConfirm }: CheckoutModalPr
           </button>
         </div>
 
-        <div className={styles.modalSection}>
-          <h3 className={styles.modalSectionTitle}>Material</h3>
-          <div className={styles.modalCard}>
-            <p className={styles.modalItemTitle}>{resource.title}</p>
-            <p className={styles.modalMeta}>{resource.type}</p>
-            <p className={styles.modalMeta}>Quantity available: {resource.quantity}</p>
-            {resource.suggestedTopics && (
-              <p className={styles.modalDescription}>
-                {resource.suggestedTopics.split('\n').slice(0, 2).join(', ')}
+        {isReceiptVisible && receipt ? (
+          <>
+            <div className={styles.modalSection}>
+              <h3 className={styles.modalSectionTitle}>Reservation Receipt</h3>
+              <div className={styles.modalCard}>
+                <p className={styles.modalItemTitle}>{receipt.resourceTitle}</p>
+                <p className={styles.modalMeta}>Reference: {receipt.reservationId}</p>
+                <p className={styles.modalMeta}>Quantity requested: {receipt.requestedQuantity}</p>
+                <p className={styles.modalMeta}>Status: {receipt.status}</p>
+              </div>
+            </div>
+
+            <div className={styles.modalSection}>
+              <h3 className={styles.modalSectionTitle}>Schedule</h3>
+              <div className={styles.modalDateRow}>
+                <div>
+                  <span className={styles.modalDateLabel}>Borrow:</span>
+                  <span className={styles.modalDateValue}>{formatDisplayDate(receipt.borrowDate)}</span>
+                </div>
+                <div>
+                  <span className={styles.modalDateLabel}>Due:</span>
+                  <span className={styles.modalDateValue}>{formatDisplayDate(receipt.dueDate)}</span>
+                </div>
+                <div>
+                  <span className={styles.modalDateLabel}>Submitted:</span>
+                  <span className={styles.modalDateValue}>{formatDisplayDate(receipt.submittedAt)}</span>
+                </div>
+              </div>
+            </div>
+
+            <div className={styles.modalActions}>
+              <button
+                type="button"
+                className={styles.modalPrimaryButton}
+                onClick={handleClose}
+              >
+                Done
+              </button>
+            </div>
+          </>
+        ) : (
+          <>
+            <div className={styles.modalSection}>
+              <h3 className={styles.modalSectionTitle}>Material</h3>
+              <div className={styles.modalCard}>
+                <p className={styles.modalItemTitle}>{resource.title}</p>
+                <p className={styles.modalMeta}>{resource.type}</p>
+                <p className={styles.modalMeta}>Quantity available: {resource.quantity}</p>
+                <div className={styles.infoRow}>
+                  <span className={styles.label}>Borrow quantity:</span>
+                  <div className={styles.quantityEditor}>
+                    <button
+                      type="button"
+                      className={styles.quantityBtn}
+                      onClick={() => setRequestedQuantity((prev) => Math.max(1, prev - 1))}
+                      disabled={requestedQuantity <= 1}
+                    >
+                      −
+                    </button>
+                    <span className={styles.quantityValue}>{requestedQuantity}</span>
+                    <button
+                      type="button"
+                      className={styles.quantityBtn}
+                      onClick={() => setRequestedQuantity((prev) => Math.min(resource.quantity, prev + 1))}
+                      disabled={requestedQuantity >= resource.quantity}
+                    >
+                      +
+                    </button>
+                  </div>
+                </div>
+                {resource.suggestedTopics && (
+                  <p className={styles.modalDescription}>
+                    {resource.suggestedTopics.split('\n').slice(0, 2).join(', ')}
+                  </p>
+                )}
+              </div>
+            </div>
+
+            <div className={styles.modalSection}>
+              <h3 className={styles.modalSectionTitle}>Borrow Period</h3>
+              <div className={styles.modalDateRow}>
+                <div>
+                  <label htmlFor="single-borrow-date" className={styles.modalDateLabel}>Borrow:</label>
+                  <input
+                    id="single-borrow-date"
+                    type="date"
+                    className={styles.modalDateInput}
+                    value={borrowDate}
+                    min={todayString}
+                    max={maxBorrowDateString}
+                    onChange={(event) => setBorrowDate(event.target.value)}
+                  />
+                </div>
+                <div>
+                  <span className={styles.modalDateLabel}>Due:</span>
+                  <span className={styles.modalDateValue}>{dueDateText}</span>
+                </div>
+              </div>
+            </div>
+
+            {!isBorrowDateValid && borrowDate && (
+              <p className={styles.modalWarning}>
+                Borrow date must be between today and the next {MAX_RESERVATION_WINDOW_DAYS} days.
               </p>
             )}
-          </div>
-        </div>
 
-        <div className={styles.modalSection}>
-          <h3 className={styles.modalSectionTitle}>Borrow Period</h3>
-          <div className={styles.modalDateRow}>
-            <div>
-              <label htmlFor="single-borrow-date" className={styles.modalDateLabel}>Borrow:</label>
-              <input
-                id="single-borrow-date"
-                type="date"
-                className={styles.modalDateInput}
-                value={borrowDate}
-                min={todayString}
-                max={maxBorrowDateString}
-                onChange={(event) => setBorrowDate(event.target.value)}
-              />
-            </div>
-            <div>
-              <span className={styles.modalDateLabel}>Due:</span>
-              <span className={styles.modalDateValue}>{dueDateText}</span>
-            </div>
-          </div>
-        </div>
+            {!isRequestedQuantityValid && (
+              <p className={styles.modalWarning}>
+                Requested quantity must be between 1 and {resource.quantity}.
+              </p>
+            )}
 
-        {!isBorrowDateValid && borrowDate && (
-          <p className={styles.modalWarning}>
-            Borrow date must be between today and the next {MAX_RESERVATION_WINDOW_DAYS} days.
-          </p>
+            {submitError && (
+              <p className={styles.modalWarning}>{submitError}</p>
+            )}
+
+            <div className={styles.modalActions}>
+              <button type="button" className={styles.modalSecondaryButton} onClick={handleClose}>
+                Cancel
+              </button>
+              <button
+                type="button"
+                className={styles.modalPrimaryButton}
+                onClick={handleConfirm}
+                disabled={!isBorrowDateValid || !isRequestedQuantityValid || isSubmitting}
+              >
+                {isSubmitting ? 'Submitting...' : 'Confirm Reservation'}
+              </button>
+            </div>
+          </>
         )}
-
-        <div className={styles.modalActions}>
-          <button type="button" className={styles.modalSecondaryButton} onClick={handleClose}>
-            Cancel
-          </button>
-          <button
-            type="button"
-            className={styles.modalPrimaryButton}
-            onClick={handleConfirm}
-            disabled={!isBorrowDateValid}
-          >
-            Confirm Checkout
-          </button>
-        </div>
       </div>
     </div>
   );

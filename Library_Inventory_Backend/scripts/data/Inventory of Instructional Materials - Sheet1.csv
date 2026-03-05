@@ -1,5 +1,5 @@
 Title/Name of Instructional Material,Type of Material,Number of Copies/ Quantity,Suggested Topics for Usage,Keywords for Search,Picture of Materials
-Glass Stirring Rod,Laboratory Equipment,5,"Mixing solids and liquids
+Glass Stirring Rod,Laboratory Equipment,6,"Mixing solids and liquids
 
 Dissolving substances
 
@@ -109,7 +109,7 @@ chemistry
 experiment
 
 lab tool",
-Glass Test Tube (16 X 150),Laboratory Equipment,15,"Holding substances
+Glass Test Tube (15ml),Laboratory Equipment,17,"Holding substances
 
 Mixing materials
 
@@ -126,7 +126,37 @@ chemistry
 experiment
 
 glassware",
-Glass Beaker (50 mL),Laboratory Equipment,5,"Measuring small volumes
+Glass Test Tube (10 ml),Laboratory Equipment,16,"Holding substances
+
+Mixing materials
+
+Heating liquids
+
+Observing changes
+
+Laboratory safety","test tube
+
+laboratory
+
+chemistry
+
+experiment
+
+glassware",
+Test Tube Rack,Laboratory Equipment,3,"Holds test tubes upright
+
+Prevents spills
+
+Used in simple experiments
+
+Keeps table organized","Test tube rack
+
+Science lab tool
+
+Hold test tubes
+
+Lab equipment",
+Glass Beaker (50 mL),Laboratory Equipment,7,"Measuring small volumes
 
 Mixing liquids
 
@@ -143,7 +173,7 @@ laboratory
 chemistry
 
 glassware",
-Glass Beaker (250 mL),Laboratory Equipment,5,"Measuring larger volumes
+Glass Beaker (250 mL),Laboratory Equipment,6,"Measuring larger volumes
 
 Mixing solutions
 
@@ -194,6 +224,21 @@ laboratory
 storage
 
 glassware",
+Weighing Bottle (Small),Laboratory Equipment,1,"Used to hold solid substances
+
+For accurate measurement using a balance
+
+Prevents contamination during weighing
+
+Keeps samples dry and secure","Sample weighing container
+
+Moisture determination
+
+Chemical analysis equipment
+
+Lab measuring tools
+
+Borosilicate glass bottle",
 Tripod Stand or Cast Iron Stand,Laboratory Equipment,5,"Laboratory apparatus
 
 Heating support
@@ -224,6 +269,23 @@ chemistry
 experiment
 
 glassware",
+Conical Flask (250 mL),Laboratory Equipment,12,"Used to mix and heat liquids
+
+Swirl liquids without spilling
+
+Used in titration experiments
+
+Can be heated safely
+
+Holds and stores solutions","Titration apparatus
+
+Chemical mixing container
+
+Volumetric analysis
+
+Lab heating container
+
+Science laboratory equipment",
 Magnifying Glass (50mm),Laboratory Equipment,5,"Observation skills
 
 Magnification tool
@@ -293,7 +355,7 @@ wind vane
 cup anemometer
 
 wind speed meter",
-Polycarbonate Thermometer,Laboratory Measuring Tool,5,"Air temperature
+Polycarbonate Thermometer,Laboratory Measuring Tool,10,"Air temperature
 
 Body temperature
 
@@ -438,6 +500,23 @@ Metric units","mechanical scale
 weighing scale
 
 balance scale",
+Table Balance Model,Weighing Equipment,4,"Used to measure the mass of objects
+
+For weighing solids in the laboratory
+
+Place object gently on the pan
+
+Ensure balance is zeroed before use
+
+Handle carefully for accurate results","Laboratory measurement equipment
+
+Sample weighing device
+
+Precision balance
+
+Lab weighing tools
+
+Science laboratory instruments",
 Measuring spoons (Set of 6),Measuring Equipment,1,"Precise measurement
 
 Small volumes
@@ -925,7 +1004,27 @@ Filipino Literacy Book
 Phonics-Based Reading
 
 Classroom Instructional Material",
-"Filipino (Marungko Approach) ""Magbasa Tayo - Level E""",Reading Materials,30 books,,,
+"Filipino (Marungko Approach) ""Magbasa Tayo - Level E""",Reading Materials,30 books,"Practice of letter sounds and blending
+
+Reading of simple words and sentences
+
+Guided reading and seatwork activities
+
+Formative assessment and remediation
+
+Used during regular Filipino reading period","Beginning Reading
+
+Phonics
+
+Early Literacy
+
+Grade 1 Filipino
+
+Reading Workbook
+
+Letter Sounds
+
+Syllable Blending",
 Ang Mga Bidang Basura,Reading Materials,14,"Waste Management
 
 3Rs (Reduce, Reuse, Recycle)
@@ -1199,3 +1298,130 @@ Children’s Literature
 Values Education
 
 Reading Material",
+Multicolor Wooden Popsicle Sticks,Art Materials,12,"Used for crafts and models
+
+Sorting and counting activities
+
+Safe for kids
+
+Science experiments
+
+Reusable and easy to handle","Craft sticks
+
+Multicolor sticks
+
+Educational materials
+
+Classroom craft tools",
+Intelligence Test Toy (Counting Numbers),Mathematical Manipulatives,2,"Helps learn numbers and counting
+
+Improves memory and focus
+
+Used for early math practice
+
+Safe for children
+
+Encourages hands-on learning","Counting numbers toy
+
+Educational math toy
+
+Early learning numbers
+
+Number recognition activity
+
+Cognitive development toy
+
+Preschool math game",
+Magnetic Fraction Demonstration Tiles (1 set),Mathematical Manipulatives,6,"Teach fractions visually
+
+Compare parts of a whole
+
+Demonstrate in class
+
+Hands-on learning","Fraction demonstration set
+
+Math learning tool
+
+Visual fraction aid
+
+Classroom math manipulative
+
+Fraction concepts teaching",
+Magnetic Fraction Tiles Round (1 set),Mathematical Manipulatives,6,"Learn fractions easily
+
+See parts of a whole
+
+Use in class activities
+
+Fun hands-on learning","Fraction circles
+
+Math manipulative set
+
+Visual fraction learning
+
+Classroom math aid
+
+Hands-on fraction tool",
+White Board (size 20 x 30 cm),Visual Learning Materials,6,"Practice writing words
+
+Draw shapes or pictures
+
+Show answers in class","whiteboard
+
+dry erase board
+
+small classroom board
+
+writing board
+
+lesson board",
+Nail Board or Geoboard,Mathematical Tool,6,"Make shapes
+
+Count & learn angles
+
+Create patterns","geoboard
+
+nail board
+
+math manipulative
+
+shapes board
+
+geometry tool",
+Liter Cube Container (Small Box),Mathematical Tool,12,"Measure liquids
+
+Hold samples
+
+Mix solutions","liter container
+
+sample box
+
+lab container
+
+experiment tool
+
+measuring box",
+Play Money,Mathematical Manipulatives,6,"Practice counting
+
+Learn money values
+
+Simulate buying & selling","toy currency
+
+counting money
+
+math manipulative
+
+classroom money",
+Grade 4-6 Compass,Mathematical Tool,23,"Draw circles
+
+Measure angles
+
+Practice geometry","compass
+
+geometry tool
+
+circle maker
+
+drawing instrument
+
+math tool",

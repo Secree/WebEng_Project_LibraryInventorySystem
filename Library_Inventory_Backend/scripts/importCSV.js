@@ -107,6 +107,11 @@ async function main() {
     console.log('\n📝 Sample resource:');
     console.log(JSON.stringify(resources[0], null, 2));
     
+    // Clear existing resources before importing
+    console.log('\n🗑️  Deleting existing resources from database...');
+    const deleteResult = await Resource.deleteMany({});
+    console.log(`✅ Deleted ${deleteResult.deletedCount} existing resources`);
+
     console.log('\n🚀 Starting import to MongoDB...');
     await bulkInsert(resources);
     

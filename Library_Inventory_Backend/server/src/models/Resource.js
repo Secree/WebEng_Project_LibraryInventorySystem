@@ -74,9 +74,8 @@ const resourceSchema = new mongoose.Schema({
 });
 
 // Update timestamp on save
-resourceSchema.pre('save', function(next) {
+resourceSchema.pre('save', function() {
   this.updatedAt = Date.now();
-  next();
 });
 
 // Transform _id to id when converting to JSON

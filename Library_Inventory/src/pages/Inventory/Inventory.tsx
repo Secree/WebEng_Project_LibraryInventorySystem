@@ -1,12 +1,19 @@
 import { useState, useEffect, useMemo } from 'react';
-import { getAllResources, updateResource } from '../../services/api';
+import { getAllResources, updateResource, reserveResource, createResource } from '../../services/api';
 import styles from './Inventory.module.css';
 import SearchToolbar from '../../components/inventory/SearchToolbar/SearchToolbar';
 import ResourceGrid from '../../components/inventory/ResourceGrid';
 import CheckoutModal from '../../components/inventory/CheckoutModal';
 import MultiCheckoutModal from '../../components/inventory/MultiCheckoutModal';
 import CartOverviewModal from '../../components/inventory/CartOverviewModal';
-import type { Resource } from '../../components/inventory/types';
+import type {
+  MultiReservationFailureItem,
+  MultiReservationReceipt,
+  MultiReservationReceiptItem,
+  Resource,
+  ReservationReceipt,
+} from '../../components/inventory/types';
+import AddResourceModal from '../../components/inventory/AddResourceModal';
 
 interface InventoryProps {
   userRole?: string;
@@ -15,6 +22,32 @@ interface InventoryProps {
 type FilterTab = 'All' | 'Books' | 'Modules' | 'Equipment';
 
 const FILTER_TABS: FilterTab[] = ['All', 'Books', 'Modules', 'Equipment'];
+const MAX_BORROW_DURATION_DAYS = 14;
+
+const parseDateValue = (dateValue: string) => {
+  const direct = new Date(dateValue);
+  if (!Number.isNaN(direct.getTime())) {
+    return direct;
+  }
+
+  const fallback = new Date(`${dateValue}T00:00:00`);
+  if (!Number.isNaN(fallback.getTime())) {
+    return fallback;
+  }
+
+  return null;
+};
+
+const getDueDateFromBorrowDate = (borrowDate: string) => {
+  const parsedDate = parseDateValue(borrowDate);
+  if (!parsedDate) {
+    return borrowDate;
+  }
+
+  const dueDate = new Date(parsedDate);
+  dueDate.setDate(dueDate.getDate() + MAX_BORROW_DURATION_DAYS);
+  return dueDate.toISOString();
+};
 
 const mapResourceToTab = (resource: Resource): Exclude<FilterTab, 'All'> => {
   // Use category (actual material type from CSV) if available, otherwise fall back to type
@@ -52,11 +85,12 @@ function Inventory({ userRole }: InventoryProps) {
   const [isCheckoutModalOpen, setIsCheckoutModalOpen] = useState(false);
   const [isMultiCheckoutModalOpen, setIsMultiCheckoutModalOpen] = useState(false);
   const [isCartModalOpen, setIsCartModalOpen] = useState(false);
+  const [isAddResourceModalOpen, setIsAddResourceModalOpen] = useState(false);
   const [showFloatingCartActions, setShowFloatingCartActions] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [pendingQuantityChanges, setPendingQuantityChanges] = useState<Record<string, number>>({});
-  const [isSaving, setIsSaving] = useState(false);
+  // const [pendingQuantityChanges, setPendingQuantityChanges] = useState<Record<string, number>>({});
+  // const [isSaving, setIsSaving] = useState(false);
 
   // Fetch resources on mount
   useEffect(() => {
@@ -118,12 +152,25 @@ function Inventory({ userRole }: InventoryProps) {
     setError('');
 
     try {
-      await Promise.all(
-        pendingEntries.map(([resourceId, quantity]) =>
-          updateResource(resourceId, { quantity })
+      // Optimistically update the UI
+      setResources(prevResources =>
+        prevResources.map(resource =>
+          resource.id === resourceId
+            ? { ...resource, quantity: newQuantity, status: newQuantity > 0 ? 'available' : 'reserved' }
+            : resource
         )
       );
-      setPendingQuantityChanges({});
+
+      // Update the backend
+      const updatedResource = await updateResource(resourceId, { quantity: newQuantity });
+
+      setResources(prevResources =>
+        prevResources.map(resource =>
+          resource.id === resourceId
+            ? updatedResource
+            : resource
+        )
+      );
     } catch (err: any) {
       console.error('Error confirming quantity changes:', err);
       setError('Failed to save quantity changes. Please try again.');
@@ -134,6 +181,16 @@ function Inventory({ userRole }: InventoryProps) {
     }
   };
 
+  const handleSaveNewResource = async (resourceData: any) => {
+    try {
+      const newResource = await createResource(resourceData);
+      setResources(prev => [newResource, ...prev]);
+      setError('');
+      alert('Resource added successfully!');
+    } catch (err: any) {
+      console.error('Error creating resource:', err);
+      throw err; // Re-throw to let the modal handle it
+    }
   const handleCancelQuantityChanges = () => {
     setPendingQuantityChanges({});
     fetchResources();
@@ -230,9 +287,40 @@ function Inventory({ userRole }: InventoryProps) {
     setCheckoutResource(null);
   };
 
-  const handleConfirmSingleCheckout = (resourceId: string, borrowDate: string) => {
-    alert(`Checkout submitted for resource: ${resourceId} on ${borrowDate}`);
-    handleCloseCheckoutModal();
+  const handleConfirmSingleCheckout = async (
+    resourceId: string,
+    borrowDate: string,
+    requestedQuantity: number,
+  ): Promise<ReservationReceipt> => {
+    try {
+      const response = await reserveResource(resourceId, borrowDate, requestedQuantity);
+
+      setResources((prevResources) =>
+        prevResources.map((resource) =>
+          resource.id === response.resource.id ? response.resource : resource
+        )
+      );
+      setError('');
+
+      const fallbackResourceTitle = resources.find((resource) => resource.id === resourceId)?.title || 'Resource';
+
+      return {
+        reservationId: response.reservation.id,
+        resourceTitle: response.reservation.resourceTitle || fallbackResourceTitle,
+        requestedQuantity: response.reservation.requestedQuantity || requestedQuantity,
+        borrowDate: response.reservation.reservationDate || borrowDate,
+        dueDate: response.reservation.dueDate || getDueDateFromBorrowDate(borrowDate),
+        status: response.reservation.status || 'pending',
+        submittedAt: response.reservation.createdAt || new Date().toISOString(),
+      };
+    } catch (err: any) {
+      const message =
+        err?.response?.data?.error ||
+        err?.response?.data?.message ||
+        'Failed to submit reservation. Please try again.';
+
+      throw new Error(message);
+    }
   };
 
   const handleRemoveFromCart = (resourceId: string) => {
@@ -264,12 +352,88 @@ function Inventory({ userRole }: InventoryProps) {
     setMultiCheckoutResources([]);
   };
 
-  const handleConfirmMultiCheckout = (borrowDate: string) => {
-    alert(`Checkout submitted for ${multiCheckoutResources.length} item(s) on ${borrowDate}.`);
-    setCartResourceIds((prev) =>
-      prev.filter((id) => !multiCheckoutResources.some((item) => item.id === id))
+  const handleConfirmMultiCheckout = async (
+    borrowDate: string,
+    requestedQuantities: Record<string, number>,
+  ): Promise<MultiReservationReceipt> => {
+    const selectedResources = [...multiCheckoutResources];
+    const results = await Promise.allSettled(
+      selectedResources.map((resource) =>
+        reserveResource(resource.id, borrowDate, requestedQuantities[resource.id] ?? 1)
+      )
     );
-    handleCloseMultiCheckoutModal();
+
+    const successfulItems: MultiReservationReceiptItem[] = [];
+    const failedItems: MultiReservationFailureItem[] = [];
+    const updatedResourcesById = new Map<string, Resource>();
+
+    let resolvedBorrowDate = borrowDate;
+    let resolvedDueDate = getDueDateFromBorrowDate(borrowDate);
+    let resolvedSubmittedAt = new Date().toISOString();
+
+    results.forEach((result, index) => {
+      const currentResource = selectedResources[index];
+
+      if (result.status === 'fulfilled') {
+        const payload = result.value;
+
+        successfulItems.push({
+          reservationId: payload.reservation.id,
+          resourceId: currentResource.id,
+          resourceTitle: payload.reservation.resourceTitle || currentResource.title,
+          requestedQuantity:
+            payload.reservation.requestedQuantity || requestedQuantities[currentResource.id] || 1,
+          status: payload.reservation.status || 'pending',
+        });
+
+        updatedResourcesById.set(payload.resource.id, payload.resource);
+
+        if (payload.reservation.reservationDate) {
+          resolvedBorrowDate = payload.reservation.reservationDate;
+        }
+        if (payload.reservation.dueDate) {
+          resolvedDueDate = payload.reservation.dueDate;
+        }
+        if (payload.reservation.createdAt) {
+          resolvedSubmittedAt = payload.reservation.createdAt;
+        }
+
+        return;
+      }
+
+      const reason =
+        result.reason?.response?.data?.error ||
+        result.reason?.response?.data?.message ||
+        result.reason?.message ||
+        'Failed to submit reservation.';
+
+      failedItems.push({
+        resourceId: currentResource.id,
+        resourceTitle: currentResource.title,
+        requestedQuantity: requestedQuantities[currentResource.id] || 1,
+        reason,
+      });
+    });
+
+    if (successfulItems.length === 0) {
+      throw new Error(failedItems[0]?.reason || 'Failed to submit reservations. Please try again.');
+    }
+
+    setResources((prevResources) =>
+      prevResources.map((resource) => updatedResourcesById.get(resource.id) || resource)
+    );
+
+    const successfulResourceIds = new Set(successfulItems.map((item) => item.resourceId));
+    setCartResourceIds((prev) => prev.filter((id) => !successfulResourceIds.has(id)));
+    setError('');
+
+    return {
+      borrowDate: resolvedBorrowDate,
+      dueDate: resolvedDueDate,
+      submittedAt: resolvedSubmittedAt,
+      successfulItems,
+      failedItems,
+    };
   };
 
   const clearFilters = () => {
@@ -290,8 +454,18 @@ function Inventory({ userRole }: InventoryProps) {
   return (
     <div className={styles.container}>
       <div className={styles.header}>
-        <h1 className={styles.title}>Find Your Resources</h1>
-        <p className={styles.subtitle}>Search through our collection of books, modules, and equipment</p>
+        <div>
+          <h1 className={styles.title}>Find Your Resources</h1>
+          <p className={styles.subtitle}>Search through our collection of books, modules, and equipment</p>
+        </div>
+        {userRole === 'admin' && (
+          <button 
+            className={styles.addResourceButton}
+            onClick={() => setIsAddResourceModalOpen(true)}
+          >
+            + Add New Resource
+          </button>
+        )}
       </div>
 
       <SearchToolbar
@@ -323,34 +497,6 @@ function Inventory({ userRole }: InventoryProps) {
         onClearFilters={clearFilters}
         onQuantityUpdate={userRole === 'admin' ? handleQuantityUpdate : undefined}
       />
-
-      {userRole === 'admin' && Object.keys(pendingQuantityChanges).length > 0 && (
-        <div className={styles.quantityConfirmationBar}>
-          <div className={styles.confirmationContent}>
-            <p className={styles.confirmationText}>
-              {Object.keys(pendingQuantityChanges).length} item{Object.keys(pendingQuantityChanges).length > 1 ? 's' : ''} pending changes
-            </p>
-            <div className={styles.confirmationButtons}>
-              <button
-                type="button"
-                className={styles.confirmButton}
-                onClick={handleConfirmQuantityChanges}
-                disabled={isSaving}
-              >
-                {isSaving ? 'Saving...' : 'Confirm Changes'}
-              </button>
-              <button
-                type="button"
-                className={styles.cancelChangesButton}
-                onClick={handleCancelQuantityChanges}
-                disabled={isSaving}
-              >
-                Cancel
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
 
       {userRole === 'user' && isMultiSelectMode && showFloatingCartActions && (
         <div className={styles.floatingCartBar}>
@@ -400,6 +546,12 @@ function Inventory({ userRole }: InventoryProps) {
         onRemoveItem={handleRemoveFromCart}
         onAddMore={handleAddMoreMaterials}
         onCheckoutAll={handleCheckoutAll}
+      />
+
+      <AddResourceModal
+        isOpen={isAddResourceModalOpen}
+        onClose={() => setIsAddResourceModalOpen(false)}
+        onSave={handleSaveNewResource}
       />
     </div>
   );

@@ -1,6 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import type { PropsWithChildren } from 'react';
 import { getMe, logout } from './services/auth';
+import { clearAuthToken } from './services/session';
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 // pages
 import Login from './pages/Login/Login';
@@ -36,6 +37,12 @@ function App() {
     }
   });
 
+  const clearSessionState = useCallback(() => {
+    clearAuthToken();
+    localStorage.removeItem('user');
+    setUser(null);
+  }, []);
+
   const handleLoginSuccess = (userData: { id: string; name: string; email: string; role: string }) => {
     setUser(userData);
     localStorage.setItem('user', JSON.stringify(userData));
@@ -47,8 +54,7 @@ function App() {
     } catch (err) {
       console.error('Logout error:', err);
     }
-    setUser(null);
-    localStorage.removeItem('user');
+    clearSessionState();
   };
 
   useEffect(() => {
@@ -62,13 +68,39 @@ function App() {
         }
       })
       .catch((err) => {
-        // Do NOT clear session on getMe failure (cross-origin cookie issues in production)
-        // Keep the localStorage user so the session persists on refresh
         const status = err?.response?.status;
+        const message = String(err?.response?.data?.error || err?.response?.data?.message || err?.message || '').toLowerCase();
+
+        if (
+          status === 401 &&
+          (
+            message.includes('token expired') ||
+            message.includes('invalid token') ||
+            message.includes('no token provided') ||
+            message.includes('authentication failed')
+          )
+        ) {
+          clearSessionState();
+          console.warn('Session expired. Please sign in again.');
+          return;
+        }
+
         const detail = status || err?.code || err?.message || 'unknown error';
         console.warn('getMe failed, keeping local session:', detail);
       });
-  }, []);
+  }, [clearSessionState]);
+
+  useEffect(() => {
+    const handleAuthExpired = () => {
+      clearSessionState();
+    };
+
+    window.addEventListener('auth:expired', handleAuthExpired);
+
+    return () => {
+      window.removeEventListener('auth:expired', handleAuthExpired);
+    };
+  }, [clearSessionState]);
 
   // Re-check localStorage when location changes (for when Login updates it)
   useEffect(() => {
