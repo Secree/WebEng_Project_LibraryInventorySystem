@@ -1,11 +1,12 @@
 import { useState, useEffect, useMemo } from 'react';
-import { getAllResources, updateResource } from '../../services/api';
+import { getAllResources, updateResource, createResource } from '../../services/api';
 import styles from './Inventory.module.css';
 import SearchToolbar from '../../components/inventory/SearchToolbar/SearchToolbar';
 import ResourceGrid from '../../components/inventory/ResourceGrid';
 import CheckoutModal from '../../components/inventory/CheckoutModal';
 import MultiCheckoutModal from '../../components/inventory/MultiCheckoutModal';
 import CartOverviewModal from '../../components/inventory/CartOverviewModal';
+import AddResourceModal from '../../components/inventory/AddResourceModal';
 import type { Resource } from '../../components/inventory/types';
 
 interface InventoryProps {
@@ -52,6 +53,7 @@ function Inventory({ userRole }: InventoryProps) {
   const [isCheckoutModalOpen, setIsCheckoutModalOpen] = useState(false);
   const [isMultiCheckoutModalOpen, setIsMultiCheckoutModalOpen] = useState(false);
   const [isCartModalOpen, setIsCartModalOpen] = useState(false);
+  const [isAddResourceModalOpen, setIsAddResourceModalOpen] = useState(false);
   const [showFloatingCartActions, setShowFloatingCartActions] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -113,6 +115,18 @@ function Inventory({ userRole }: InventoryProps) {
       setError('Failed to update quantity. Please try again.');
       // Revert on error
       fetchResources();
+    }
+  };
+
+  const handleSaveNewResource = async (resourceData: any) => {
+    try {
+      const newResource = await createResource(resourceData);
+      setResources(prev => [newResource, ...prev]);
+      setError('');
+      alert('Resource added successfully!');
+    } catch (err: any) {
+      console.error('Error creating resource:', err);
+      throw err; // Re-throw to let the modal handle it
     }
   };
 
@@ -267,8 +281,18 @@ function Inventory({ userRole }: InventoryProps) {
   return (
     <div className={styles.container}>
       <div className={styles.header}>
-        <h1 className={styles.title}>Find Your Resources</h1>
-        <p className={styles.subtitle}>Search through our collection of books, modules, and equipment</p>
+        <div>
+          <h1 className={styles.title}>Find Your Resources</h1>
+          <p className={styles.subtitle}>Search through our collection of books, modules, and equipment</p>
+        </div>
+        {userRole === 'admin' && (
+          <button 
+            className={styles.addResourceButton}
+            onClick={() => setIsAddResourceModalOpen(true)}
+          >
+            + Add New Resource
+          </button>
+        )}
       </div>
 
       <SearchToolbar
@@ -300,34 +324,6 @@ function Inventory({ userRole }: InventoryProps) {
         onClearFilters={clearFilters}
         onQuantityUpdate={userRole === 'admin' ? handleQuantityUpdate : undefined}
       />
-
-      {/* {userRole === 'admin' && Object.keys(pendingQuantityChanges).length > 0 && (
-        <div className={styles.quantityConfirmationBar}>
-          <div className={styles.confirmationContent}>
-            <p className={styles.confirmationText}>
-              {Object.keys(pendingQuantityChanges).length} item{Object.keys(pendingQuantityChanges).length > 1 ? 's' : ''} pending changes
-            </p>
-            <div className={styles.confirmationButtons}>
-              <button
-                type="button"
-                className={styles.confirmButton}
-                onClick={handleConfirmQuantityChanges}
-                disabled={isSaving}
-              >
-                {isSaving ? 'Saving...' : 'Confirm Changes'}
-              </button>
-              <button
-                type="button"
-                className={styles.cancelChangesButton}
-                onClick={handleCancelQuantityChanges}
-                disabled={isSaving}
-              >
-                Cancel
-              </button>
-            </div>
-          </div>
-        </div>
-      )} */}
 
       {userRole === 'user' && isMultiSelectMode && showFloatingCartActions && (
         <div className={styles.floatingCartBar}>
@@ -377,6 +373,12 @@ function Inventory({ userRole }: InventoryProps) {
         onRemoveItem={handleRemoveFromCart}
         onAddMore={handleAddMoreMaterials}
         onCheckoutAll={handleCheckoutAll}
+      />
+
+      <AddResourceModal
+        isOpen={isAddResourceModalOpen}
+        onClose={() => setIsAddResourceModalOpen(false)}
+        onSave={handleSaveNewResource}
       />
     </div>
   );
