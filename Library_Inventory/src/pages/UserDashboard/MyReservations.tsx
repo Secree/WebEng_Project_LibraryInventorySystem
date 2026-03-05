@@ -150,6 +150,7 @@ function MyReservations() {
               </div>
 
               <p className={styles.reservationMeta}>Reference: {reservation.id}</p>
+              <p className={styles.reservationMeta}>Requested quantity: {reservation.requestedQuantity}</p>
               <p className={styles.reservationMeta}>Borrow date: {formatDate(reservation.reservationDate)}</p>
               <p className={styles.reservationMeta}>Due date: {formatDate(reservation.dueDate)}</p>
               <p className={styles.reservationMeta}>Submitted: {formatDate(reservation.createdAt)}</p>

@@ -8,7 +8,7 @@ interface CheckoutModalProps {
   isOpen: boolean;
   resource: Resource | null;
   onClose: () => void;
-  onConfirm: (resourceId: string, borrowDate: string) => Promise<ReservationReceipt>;
+  onConfirm: (resourceId: string, borrowDate: string, requestedQuantity: number) => Promise<ReservationReceipt>;
 }
 
 const formatDisplayDate = (value: string) => {
@@ -27,6 +27,7 @@ const formatDisplayDate = (value: string) => {
 
 function CheckoutModal({ isOpen, resource, onClose, onConfirm }: CheckoutModalProps) {
   const [borrowDate, setBorrowDate] = useState('');
+  const [requestedQuantity, setRequestedQuantity] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState('');
   const [receipt, setReceipt] = useState<ReservationReceipt | null>(null);
@@ -37,6 +38,7 @@ function CheckoutModal({ isOpen, resource, onClose, onConfirm }: CheckoutModalPr
     }
 
     setBorrowDate('');
+    setRequestedQuantity(1);
     setIsSubmitting(false);
     setSubmitError('');
     setReceipt(null);
@@ -74,8 +76,17 @@ function CheckoutModal({ isOpen, resource, onClose, onConfirm }: CheckoutModalPr
     return !Number.isNaN(selected.getTime()) && selected >= minDate && selected <= maxDate;
   }, [borrowDate, maxBorrowDate, today]);
 
+  const isRequestedQuantityValid = useMemo(() => {
+    if (!resource) {
+      return false;
+    }
+
+    return requestedQuantity >= 1 && requestedQuantity <= resource.quantity;
+  }, [requestedQuantity, resource]);
+
   const handleClose = () => {
     setBorrowDate('');
+    setRequestedQuantity(1);
     setIsSubmitting(false);
     setSubmitError('');
     setReceipt(null);
@@ -83,13 +94,13 @@ function CheckoutModal({ isOpen, resource, onClose, onConfirm }: CheckoutModalPr
   };
 
   const handleConfirm = async () => {
-    if (!isBorrowDateValid || isSubmitting || !resource) return;
+    if (!isBorrowDateValid || !isRequestedQuantityValid || isSubmitting || !resource) return;
 
     setIsSubmitting(true);
     setSubmitError('');
 
     try {
-      const result = await onConfirm(resource.id, borrowDate);
+      const result = await onConfirm(resource.id, borrowDate, requestedQuantity);
       setReceipt(result);
       setSubmitError('');
     } catch (error: unknown) {
@@ -131,6 +142,7 @@ function CheckoutModal({ isOpen, resource, onClose, onConfirm }: CheckoutModalPr
               <div className={styles.modalCard}>
                 <p className={styles.modalItemTitle}>{receipt.resourceTitle}</p>
                 <p className={styles.modalMeta}>Reference: {receipt.reservationId}</p>
+                <p className={styles.modalMeta}>Quantity requested: {receipt.requestedQuantity}</p>
                 <p className={styles.modalMeta}>Status: {receipt.status}</p>
               </div>
             </div>
@@ -171,6 +183,28 @@ function CheckoutModal({ isOpen, resource, onClose, onConfirm }: CheckoutModalPr
                 <p className={styles.modalItemTitle}>{resource.title}</p>
                 <p className={styles.modalMeta}>{resource.type}</p>
                 <p className={styles.modalMeta}>Quantity available: {resource.quantity}</p>
+                <div className={styles.infoRow}>
+                  <span className={styles.label}>Borrow quantity:</span>
+                  <div className={styles.quantityEditor}>
+                    <button
+                      type="button"
+                      className={styles.quantityBtn}
+                      onClick={() => setRequestedQuantity((prev) => Math.max(1, prev - 1))}
+                      disabled={requestedQuantity <= 1}
+                    >
+                      −
+                    </button>
+                    <span className={styles.quantityValue}>{requestedQuantity}</span>
+                    <button
+                      type="button"
+                      className={styles.quantityBtn}
+                      onClick={() => setRequestedQuantity((prev) => Math.min(resource.quantity, prev + 1))}
+                      disabled={requestedQuantity >= resource.quantity}
+                    >
+                      +
+                    </button>
+                  </div>
+                </div>
                 {resource.suggestedTopics && (
                   <p className={styles.modalDescription}>
                     {resource.suggestedTopics.split('\n').slice(0, 2).join(', ')}
@@ -207,6 +241,12 @@ function CheckoutModal({ isOpen, resource, onClose, onConfirm }: CheckoutModalPr
               </p>
             )}
 
+            {!isRequestedQuantityValid && (
+              <p className={styles.modalWarning}>
+                Requested quantity must be between 1 and {resource.quantity}.
+              </p>
+            )}
+
             {submitError && (
               <p className={styles.modalWarning}>{submitError}</p>
             )}
@@ -219,7 +259,7 @@ function CheckoutModal({ isOpen, resource, onClose, onConfirm }: CheckoutModalPr
                 type="button"
                 className={styles.modalPrimaryButton}
                 onClick={handleConfirm}
-                disabled={!isBorrowDateValid || isSubmitting}
+                disabled={!isBorrowDateValid || !isRequestedQuantityValid || isSubmitting}
               >
                 {isSubmitting ? 'Submitting...' : 'Confirm Reservation'}
               </button>

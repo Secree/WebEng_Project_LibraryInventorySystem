@@ -237,6 +237,7 @@ function AdminReservations() {
               <tr>
                 <th>User</th>
                 <th>Resource</th>
+                <th>Qty</th>
                 <th>Status</th>
                 <th>Borrow</th>
                 <th>Due</th>
@@ -249,6 +250,7 @@ function AdminReservations() {
                 <tr key={reservation.id}>
                   <td data-label="User">{reservation.userEmail}</td>
                   <td data-label="Resource">{reservation.resourceTitle}</td>
+                  <td data-label="Qty">{reservation.requestedQuantity}</td>
                   <td data-label="Status">
                     <span className={`${styles.roleSpan} ${statusClassName(reservation.status)}`}>
                       {toStatusLabel(reservation.status)}

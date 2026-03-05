@@ -34,6 +34,18 @@ const reservationSchema = new mongoose.Schema({
     type: String,
     required: true
   },
+  requestedQuantity: {
+    type: Number,
+    required: true,
+    default: 1,
+    min: 1,
+    validate: {
+      validator(value) {
+        return Number.isInteger(value) && value >= 1;
+      },
+      message: 'Requested quantity must be a positive whole number.'
+    }
+  },
   status: {
     type: String,
     enum: ['pending', 'approved', 'rejected', 'returned', 'cancelled', 'cancel_requested'],

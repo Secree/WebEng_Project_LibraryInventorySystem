@@ -65,6 +65,7 @@ export interface ReservationRecord {
   resourceId: string;
   userEmail: string;
   resourceTitle: string;
+  requestedQuantity: number;
   status: string;
   reservationDate: string;
   dueDate: string;
@@ -78,6 +79,7 @@ export interface UserReservation {
   id: string;
   resourceTitle: string;
   userEmail: string;
+  requestedQuantity: number;
   status: string;
   reservationDate: string;
   dueDate: string;
@@ -103,6 +105,7 @@ export interface AdminReservation {
   userEmail: string;
   resourceId: string;
   resourceTitle: string;
+  requestedQuantity: number;
   status: string;
   reservationDate: string;
   dueDate: string;
@@ -153,10 +156,16 @@ export const deleteResource = async (id: string) => {
   return response.data;
 };
 
-export const reserveResource = async (resourceId: string, reservationDate: string, notes?: string) => {
+export const reserveResource = async (
+  resourceId: string,
+  reservationDate: string,
+  requestedQuantity: number,
+  notes?: string
+) => {
   const response = await api.post('/reservations', {
     resourceId,
     reservationDate,
+    requestedQuantity,
     notes,
   });
   return response.data as ReservationResponse;

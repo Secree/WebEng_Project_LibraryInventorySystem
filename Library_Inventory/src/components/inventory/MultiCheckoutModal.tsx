@@ -8,7 +8,7 @@ interface MultiCheckoutModalProps {
   isOpen: boolean;
   resources: Resource[];
   onClose: () => void;
-  onConfirm: (borrowDate: string) => Promise<MultiReservationReceipt>;
+  onConfirm: (borrowDate: string, requestedQuantities: Record<string, number>) => Promise<MultiReservationReceipt>;
 }
 
 const formatDisplayDate = (value: string) => {
@@ -27,9 +27,15 @@ const formatDisplayDate = (value: string) => {
 
 function MultiCheckoutModal({ isOpen, resources, onClose, onConfirm }: MultiCheckoutModalProps) {
   const [borrowDate, setBorrowDate] = useState('');
+  const [requestedQuantities, setRequestedQuantities] = useState<Record<string, number>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState('');
   const [receipt, setReceipt] = useState<MultiReservationReceipt | null>(null);
+
+  const resourcesKey = useMemo(
+    () => resources.map((resource) => `${resource.id}:${resource.quantity}`).join('|'),
+    [resources],
+  );
 
   useEffect(() => {
     if (!isOpen) {
@@ -37,10 +43,15 @@ function MultiCheckoutModal({ isOpen, resources, onClose, onConfirm }: MultiChec
     }
 
     setBorrowDate('');
+    const initialQuantities = resources.reduce<Record<string, number>>((acc, resource) => {
+      acc[resource.id] = 1;
+      return acc;
+    }, {});
+    setRequestedQuantities(initialQuantities);
     setIsSubmitting(false);
     setSubmitError('');
     setReceipt(null);
-  }, [isOpen, resources.length]);
+  }, [isOpen, resourcesKey]);
 
   const dueDateText = useMemo(() => {
     if (!borrowDate) return 'Select a borrow date first';
@@ -74,8 +85,16 @@ function MultiCheckoutModal({ isOpen, resources, onClose, onConfirm }: MultiChec
     return !Number.isNaN(selected.getTime()) && selected >= minDate && selected <= maxDate;
   }, [borrowDate, maxBorrowDate, today]);
 
+  const hasInvalidRequestedQuantities = useMemo(() => {
+    return resources.some((resource) => {
+      const requested = requestedQuantities[resource.id] ?? 1;
+      return requested < 1 || requested > resource.quantity;
+    });
+  }, [requestedQuantities, resources]);
+
   const handleClose = () => {
     setBorrowDate('');
+    setRequestedQuantities({});
     setIsSubmitting(false);
     setSubmitError('');
     setReceipt(null);
@@ -83,13 +102,13 @@ function MultiCheckoutModal({ isOpen, resources, onClose, onConfirm }: MultiChec
   };
 
   const handleConfirm = async () => {
-    if (!isBorrowDateValid || isSubmitting) return;
+    if (!isBorrowDateValid || hasInvalidRequestedQuantities || isSubmitting) return;
 
     setIsSubmitting(true);
     setSubmitError('');
 
     try {
-      const result = await onConfirm(borrowDate);
+      const result = await onConfirm(borrowDate, requestedQuantities);
       setReceipt(result);
       setSubmitError('');
     } catch (error: unknown) {
@@ -153,6 +172,7 @@ function MultiCheckoutModal({ isOpen, resources, onClose, onConfirm }: MultiChec
                 <div key={item.reservationId} className={styles.modalCard}>
                   <p className={styles.modalItemTitle}>{item.resourceTitle}</p>
                   <p className={styles.modalMeta}>Reference: {item.reservationId}</p>
+                  <p className={styles.modalMeta}>Quantity requested: {item.requestedQuantity}</p>
                   <p className={styles.modalMeta}>Status: {item.status}</p>
                 </div>
               ))}
@@ -164,6 +184,7 @@ function MultiCheckoutModal({ isOpen, resources, onClose, onConfirm }: MultiChec
                 {receipt.failedItems.map((item) => (
                   <div key={item.resourceId} className={styles.modalCard}>
                     <p className={styles.modalItemTitle}>{item.resourceTitle}</p>
+                    <p className={styles.modalMeta}>Quantity requested: {item.requestedQuantity}</p>
                     <p className={styles.modalMeta}>{item.reason}</p>
                   </div>
                 ))}
@@ -195,6 +216,38 @@ function MultiCheckoutModal({ isOpen, resources, onClose, onConfirm }: MultiChec
                   <p className={styles.modalItemTitle}>{resource.title}</p>
                   <p className={styles.modalMeta}>{resource.type}</p>
                   <p className={styles.modalMeta}>Quantity available: {resource.quantity}</p>
+                  <div className={styles.infoRow}>
+                    <span className={styles.label}>Borrow quantity:</span>
+                    <div className={styles.quantityEditor}>
+                      <button
+                        type="button"
+                        className={styles.quantityBtn}
+                        onClick={() => {
+                          setRequestedQuantities((previous) => ({
+                            ...previous,
+                            [resource.id]: Math.max(1, (previous[resource.id] ?? 1) - 1),
+                          }));
+                        }}
+                        disabled={(requestedQuantities[resource.id] ?? 1) <= 1}
+                      >
+                        −
+                      </button>
+                      <span className={styles.quantityValue}>{requestedQuantities[resource.id] ?? 1}</span>
+                      <button
+                        type="button"
+                        className={styles.quantityBtn}
+                        onClick={() => {
+                          setRequestedQuantities((previous) => ({
+                            ...previous,
+                            [resource.id]: Math.min(resource.quantity, (previous[resource.id] ?? 1) + 1),
+                          }));
+                        }}
+                        disabled={(requestedQuantities[resource.id] ?? 1) >= resource.quantity}
+                      >
+                        +
+                      </button>
+                    </div>
+                  </div>
                   {resource.suggestedTopics && (
                     <p className={styles.modalDescription}>
                       {resource.suggestedTopics.split('\n').slice(0, 2).join(', ')}
@@ -232,6 +285,12 @@ function MultiCheckoutModal({ isOpen, resources, onClose, onConfirm }: MultiChec
               </p>
             )}
 
+            {hasInvalidRequestedQuantities && (
+              <p className={styles.modalWarning}>
+                Requested quantities must be between 1 and each item's available stock.
+              </p>
+            )}
+
             {submitError && (
               <p className={styles.modalWarning}>{submitError}</p>
             )}
@@ -244,7 +303,7 @@ function MultiCheckoutModal({ isOpen, resources, onClose, onConfirm }: MultiChec
                 type="button"
                 className={styles.modalPrimaryButton}
                 onClick={handleConfirm}
-                disabled={!isBorrowDateValid || isSubmitting}
+                disabled={!isBorrowDateValid || hasInvalidRequestedQuantities || isSubmitting}
               >
                 {isSubmitting ? 'Submitting...' : 'Confirm Reservation'}
               </button>

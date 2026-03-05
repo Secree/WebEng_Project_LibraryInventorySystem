@@ -37,6 +37,15 @@ const syncResourceStatusFromQuantity = (resource) => {
   resource.status = resource.quantity > 0 ? 'available' : 'reserved';
 };
 
+const getRequestedQuantityValue = (reservationLike) => {
+  const parsed = Number(reservationLike?.requestedQuantity);
+  if (Number.isInteger(parsed) && parsed >= 1) {
+    return parsed;
+  }
+
+  return 1;
+};
+
 const normalizeReservation = (reservationDoc) => {
   const reservation = reservationDoc?.toObject ? reservationDoc.toObject() : reservationDoc;
 
@@ -47,14 +56,16 @@ const normalizeReservation = (reservationDoc) => {
   const { _id, __v, ...rest } = reservation;
   return {
     id: _id.toString(),
-    ...rest
+    ...rest,
+    requestedQuantity: getRequestedQuantityValue(rest),
   };
 };
 
 const restoreResourceAndDeleteReservation = async (reservation) => {
   const resource = await Resource.findById(reservation.resourceId);
   if (resource) {
-    resource.quantity = Math.max(0, resource.quantity + 1);
+    const quantityToRestore = getRequestedQuantityValue(reservation);
+    resource.quantity = Math.max(0, resource.quantity + quantityToRestore);
     syncResourceStatusFromQuantity(resource);
     await resource.save();
   }
@@ -120,7 +131,7 @@ const reservationService = {
 
   createReservation: async (reservationData, currentUser) => {
     try {
-      const { resourceId, reservationDate, notes } = reservationData || {};
+      const { resourceId, reservationDate, requestedQuantity, notes } = reservationData || {};
 
       if (!currentUser?.id) {
         throw new Error('Authenticated user is required');
@@ -130,6 +141,11 @@ const reservationService = {
       }
       if (!reservationDate) {
         throw new Error('Borrow date is required');
+      }
+
+      const parsedRequestedQuantity = Number(requestedQuantity ?? 1);
+      if (!Number.isInteger(parsedRequestedQuantity) || parsedRequestedQuantity < 1) {
+        throw new Error('Requested quantity must be a positive whole number');
       }
 
       assertObjectId(currentUser.id, 'user id');
@@ -149,6 +165,9 @@ const reservationService = {
       if (resource.quantity <= 0 || resource.status !== 'available') {
         throw new Error('Resource is not available for reservation');
       }
+      if (parsedRequestedQuantity > resource.quantity) {
+        throw new Error(`Requested quantity exceeds available stock (${resource.quantity})`);
+      }
 
       const borrowDate = getStartOfDay(new Date(reservationDate));
       if (Number.isNaN(borrowDate.getTime())) {
@@ -162,6 +181,7 @@ const reservationService = {
         resourceId: resource._id,
         userEmail: user.email,
         resourceTitle: resource.title,
+        requestedQuantity: parsedRequestedQuantity,
         reservationDate: borrowDate,
         dueDate,
         status: 'pending',
@@ -259,11 +279,12 @@ const reservationService = {
       if (!resource) {
         throw new Error('Resource not found');
       }
-      if (resource.quantity <= 0 || resource.status !== 'available') {
+      const quantityToApprove = getRequestedQuantityValue(reservation);
+      if (resource.quantity < quantityToApprove || resource.status !== 'available') {
         throw new Error('Resource is no longer available for approval');
       }
 
-      resource.quantity = Math.max(0, resource.quantity - 1);
+      resource.quantity = Math.max(0, resource.quantity - quantityToApprove);
       syncResourceStatusFromQuantity(resource);
       await resource.save();
 

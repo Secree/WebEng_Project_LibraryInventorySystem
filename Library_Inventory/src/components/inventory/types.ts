@@ -13,6 +13,7 @@ export interface Resource {
 export interface ReservationReceipt {
   reservationId: string;
   resourceTitle: string;
+  requestedQuantity: number;
   borrowDate: string;
   dueDate: string;
   status: string;
@@ -23,12 +24,14 @@ export interface MultiReservationReceiptItem {
   reservationId: string;
   resourceId: string;
   resourceTitle: string;
+  requestedQuantity: number;
   status: string;
 }
 
 export interface MultiReservationFailureItem {
   resourceId: string;
   resourceTitle: string;
+  requestedQuantity: number;
   reason: string;
 }
 

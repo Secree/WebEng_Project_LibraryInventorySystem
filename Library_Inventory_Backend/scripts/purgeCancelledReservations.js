@@ -10,6 +10,15 @@ const syncResourceStatusFromQuantity = (resource) => {
   resource.status = resource.quantity > 0 ? 'available' : 'reserved';
 };
 
+const getRequestedQuantity = (reservation) => {
+  const parsed = Number(reservation?.requestedQuantity);
+  if (Number.isInteger(parsed) && parsed >= 1) {
+    return parsed;
+  }
+
+  return 1;
+};
+
 const run = async () => {
   await connectDB();
 
@@ -27,7 +36,7 @@ const run = async () => {
 
   cancelledReservations.forEach((reservation) => {
     const key = reservation.resourceId.toString();
-    restoreByResource.set(key, (restoreByResource.get(key) || 0) + 1);
+    restoreByResource.set(key, (restoreByResource.get(key) || 0) + getRequestedQuantity(reservation));
   });
 
   for (const [resourceId, restoreCount] of restoreByResource.entries()) {

@@ -277,10 +277,11 @@ function Inventory({ userRole }: InventoryProps) {
 
   const handleConfirmSingleCheckout = async (
     resourceId: string,
-    borrowDate: string
+    borrowDate: string,
+    requestedQuantity: number,
   ): Promise<ReservationReceipt> => {
     try {
-      const response = await reserveResource(resourceId, borrowDate);
+      const response = await reserveResource(resourceId, borrowDate, requestedQuantity);
 
       setResources((prevResources) =>
         prevResources.map((resource) =>
@@ -294,6 +295,7 @@ function Inventory({ userRole }: InventoryProps) {
       return {
         reservationId: response.reservation.id,
         resourceTitle: response.reservation.resourceTitle || fallbackResourceTitle,
+        requestedQuantity: response.reservation.requestedQuantity || requestedQuantity,
         borrowDate: response.reservation.reservationDate || borrowDate,
         dueDate: response.reservation.dueDate || getDueDateFromBorrowDate(borrowDate),
         status: response.reservation.status || 'pending',
@@ -338,10 +340,15 @@ function Inventory({ userRole }: InventoryProps) {
     setMultiCheckoutResources([]);
   };
 
-  const handleConfirmMultiCheckout = async (borrowDate: string): Promise<MultiReservationReceipt> => {
+  const handleConfirmMultiCheckout = async (
+    borrowDate: string,
+    requestedQuantities: Record<string, number>,
+  ): Promise<MultiReservationReceipt> => {
     const selectedResources = [...multiCheckoutResources];
     const results = await Promise.allSettled(
-      selectedResources.map((resource) => reserveResource(resource.id, borrowDate))
+      selectedResources.map((resource) =>
+        reserveResource(resource.id, borrowDate, requestedQuantities[resource.id] ?? 1)
+      )
     );
 
     const successfulItems: MultiReservationReceiptItem[] = [];
@@ -362,6 +369,8 @@ function Inventory({ userRole }: InventoryProps) {
           reservationId: payload.reservation.id,
           resourceId: currentResource.id,
           resourceTitle: payload.reservation.resourceTitle || currentResource.title,
+          requestedQuantity:
+            payload.reservation.requestedQuantity || requestedQuantities[currentResource.id] || 1,
           status: payload.reservation.status || 'pending',
         });
 
@@ -389,6 +398,7 @@ function Inventory({ userRole }: InventoryProps) {
       failedItems.push({
         resourceId: currentResource.id,
         resourceTitle: currentResource.title,
+        requestedQuantity: requestedQuantities[currentResource.id] || 1,
         reason,
       });
     });
