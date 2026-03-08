@@ -95,14 +95,20 @@
   font-size: 14px;
 }
 
-.formGroup input[type="text"],
-.formGroup input[type="number"],
-.formGroup select,
-.formGroup textarea {
+.formInput {
+  display: flex;
+  justify-content: start;
+}
+
+.inputText,
+.inputNumber,
+.inputSelect {
   width: 100%;
   padding: 10px 12px;
   border: 1px solid #d1d5db;
   border-radius: 6px;
+  background-color: #fff;
+  color: rgb(0, 0, 0);
   font-size: 14px;
   transition: all 0.2s;
   font-family: inherit;
@@ -112,13 +118,8 @@
 .formGroup select:focus,
 .formGroup textarea:focus {
   outline: none;
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-}
-
-.formGroup textarea {
-  resize: vertical;
-  min-height: 80px;
+  border-color: #4f46e5;
+  box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.2);
 }
 
 .imageUpload {
@@ -130,6 +131,7 @@
   padding: 10px;
   border: 2px dashed #d1d5db;
   border-radius: 8px;
+  margin: 5px 0 5px 0;
   cursor: pointer;
   transition: all 0.2s;
 }
@@ -162,6 +164,11 @@
   margin: 0;
   color: #6b7280;
   font-size: 14px;
+}
+
+.imageFilePreviewContainer {
+  width: 100%;
+  text-align: center;
 }
 
 .imagePreviewContainer {
