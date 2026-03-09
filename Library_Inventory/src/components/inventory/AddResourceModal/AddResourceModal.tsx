@@ -11,14 +11,9 @@ function AddResourceModal({ isOpen, onClose, onSave }: AddResourceModalProps) {
   const [formData, setFormData] = useState({
     title: '',
     category: '',
-    type: 'other',
     quantity: 1,
     suggestedTopics: '',
     keywords: '',
-    author: '',
-    publisher: '',
-    isbn: '',
-    yearPublished: '',
   });
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string>('');
@@ -33,7 +28,7 @@ function AddResourceModal({ isOpen, onClose, onSave }: AddResourceModalProps) {
     const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
-      [name]: name === 'quantity' || name === 'yearPublished' ? (value ? parseInt(value) : '') : value
+      [name]: name === 'quantity' ? (value ? parseInt(value) : '') : value
     }));
   };
 
@@ -89,14 +84,9 @@ function AddResourceModal({ isOpen, onClose, onSave }: AddResourceModalProps) {
       setFormData({
         title: '',
         category: '',
-        type: 'other',
         quantity: 1,
         suggestedTopics: '',
         keywords: '',
-        author: '',
-        publisher: '',
-        isbn: '',
-        yearPublished: '',
       });
       setImageFile(null);
       setImagePreview('');
@@ -111,7 +101,7 @@ function AddResourceModal({ isOpen, onClose, onSave }: AddResourceModalProps) {
   if (!isOpen) return null;
 
   return (
-    <div className={styles.modalOverlay} onClick={onClose}>
+    <div className={styles.modalOverlay}>
       <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
         <div className={styles.modalHeader}>
           <h2>Add New Resource</h2>
@@ -150,36 +140,9 @@ function AddResourceModal({ isOpen, onClose, onSave }: AddResourceModalProps) {
                   className={styles.inputSelect}
                 >
                   <option value="">Select category</option>
-                  <option value="Laboratory Equipment">Laboratory Equipment</option>
-                  <option value="Reading Materials">Reading Materials</option>
-                  <option value="Mathematical Manipulatives">Mathematical Manipulatives</option>
-                  <option value="Energy Kits">Energy Kits</option>
-                  <option value="Learning Materials">Learning Materials</option>
-                  <option value="Measuring Equipment">Measuring Equipment</option>
-                  <option value="Laboratory Measuring Tool">Laboratory Measuring Tool</option>
-                  <option value="Anatomical Model">Anatomical Model</option>
-                  <option value="Weighing Equipment">Weighing Equipment</option>
-                  <option value="Laboratory Safety Equipment">Laboratory Safety Equipment</option>
-                  <option value="Other">Other</option>
-                </select>
-              </div>
-            </div>
-
-            <div className={styles.formGroup}>
-              <label htmlFor="type">Type</label>
-              <div className={styles.formInput}>
-                <select
-                  id="type"
-                  name="type"
-                  value={formData.type}
-                  onChange={handleInputChange}
-                  className={styles.inputSelect}
-                >
-                  <option value="other">Other</option>
-                  <option value="book">Book</option>
-                  <option value="journal">Journal</option>
-                  <option value="magazine">Magazine</option>
-                  <option value="digital">Digital</option>
+                  <option value="Books">Books</option>
+                  <option value="Modules">Modules</option>
+                  <option value="Equipment">Equipment</option>
                 </select>
               </div>
             </div>
@@ -200,67 +163,6 @@ function AddResourceModal({ isOpen, onClose, onSave }: AddResourceModalProps) {
               </div>
             </div>
 
-            <div className={styles.formGroup}>
-              <label htmlFor="author">Author</label>
-              <div className={styles.formInput}>
-                <input
-                  type="text"
-                  id="author"
-                  name="author"
-                  value={formData.author}
-                  onChange={handleInputChange}
-                  placeholder="Author name"
-                  className={styles.inputText}
-                />
-              </div>
-            </div>
-
-            <div className={styles.formGroup}>
-              <label htmlFor="publisher">Publisher</label>
-              <div className={styles.formInput}>
-                <input
-                  type="text"
-                  id="publisher"
-                  name="publisher"
-                  value={formData.publisher}
-                  onChange={handleInputChange}
-                  placeholder="Publisher name"
-                  className={styles.inputText}
-                />
-              </div>
-            </div>
-
-            <div className={styles.formGroup}>
-              <label htmlFor="isbn">ISBN</label>
-              <div className={styles.formInput}>
-                <input
-                  type="text"
-                  id="isbn"
-                  name="isbn"
-                  value={formData.isbn}
-                  onChange={handleInputChange}
-                  placeholder="ISBN number"
-                  className={styles.inputText}
-                />
-              </div>
-            </div>
-
-            <div className={styles.formGroup}>
-              <label htmlFor="yearPublished">Year Published</label>
-              <div className={styles.formInput}>
-                <input
-                  type="number"
-                  id="yearPublished"
-                  name="yearPublished"
-                  value={formData.yearPublished}
-                  onChange={handleInputChange}
-                  placeholder="2024"
-                  min="1900"
-                  max={new Date().getFullYear()}
-                  className={styles.inputNumber}
-                />
-              </div>
-            </div>
           </div>
 
           <div className={styles.formGroup}>

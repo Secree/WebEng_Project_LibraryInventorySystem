@@ -3,10 +3,6 @@ import styles from './AddResourceModal.module.css';
 import type { Resource } from '../types';
 
 interface EditableResource extends Resource {
-  author?: string;
-  publisher?: string;
-  isbn?: string;
-  yearPublished?: number;
   imageUrl?: string;
 }
 
@@ -17,17 +13,44 @@ interface EditResourceModalProps {
   onSave: (resourceId: string, resourceData: any) => Promise<void>;
 }
 
+const normalizeCategoryValue = (category?: string, fallbackType?: string) => {
+  const normalized = (category || fallbackType || '').toLowerCase();
+
+  if (!normalized) {
+    return '';
+  }
+
+  if (
+    normalized.includes('equipment') ||
+    normalized.includes('laboratory') ||
+    normalized.includes('measuring') ||
+    normalized.includes('weighing') ||
+    normalized.includes('safety') ||
+    normalized.includes('energy') ||
+    normalized.includes('anatomical') ||
+    normalized.includes('model')
+  ) {
+    return 'Equipment';
+  }
+
+  if (
+    normalized.includes('books') ||
+    normalized.includes('book') ||
+    normalized.includes('reading') ||
+    normalized.includes('learning')
+  ) {
+    return 'Books';
+  }
+
+  return 'Modules';
+};
+
 const getFormDataFromResource = (resource: EditableResource | null) => ({
   title: resource?.title || '',
-  category: resource?.category || '',
-  type: resource?.type || 'other',
+  category: normalizeCategoryValue(resource?.category, resource?.type),
   quantity: resource?.quantity ?? 1,
   suggestedTopics: resource?.suggestedTopics || '',
   keywords: resource?.keywords || '',
-  author: resource?.author || '',
-  publisher: resource?.publisher || '',
-  isbn: resource?.isbn || '',
-  yearPublished: resource?.yearPublished ?? '',
 });
 
 function EditResourceModal({ isOpen, resource, onClose, onSave }: EditResourceModalProps) {
@@ -59,7 +82,7 @@ function EditResourceModal({ isOpen, resource, onClose, onSave }: EditResourceMo
     const { name, value } = e.target;
     setFormData((prev) => ({
       ...prev,
-      [name]: name === 'quantity' || name === 'yearPublished' ? (value ? parseInt(value, 10) : '') : value,
+      [name]: name === 'quantity' ? (value ? parseInt(value, 10) : '') : value,
     }));
   };
 
@@ -130,7 +153,7 @@ function EditResourceModal({ isOpen, resource, onClose, onSave }: EditResourceMo
   }
 
   return (
-    <div className={styles.modalOverlay} onClick={onClose}>
+    <div className={styles.modalOverlay}>
       <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
         <div className={styles.modalHeader}>
           <h2>Edit Resource</h2>
@@ -169,36 +192,9 @@ function EditResourceModal({ isOpen, resource, onClose, onSave }: EditResourceMo
                   className={styles.inputSelect}
                 >
                   <option value="">Select category</option>
-                  <option value="Laboratory Equipment">Laboratory Equipment</option>
-                  <option value="Reading Materials">Reading Materials</option>
-                  <option value="Mathematical Manipulatives">Mathematical Manipulatives</option>
-                  <option value="Energy Kits">Energy Kits</option>
-                  <option value="Learning Materials">Learning Materials</option>
-                  <option value="Measuring Equipment">Measuring Equipment</option>
-                  <option value="Laboratory Measuring Tool">Laboratory Measuring Tool</option>
-                  <option value="Anatomical Model">Anatomical Model</option>
-                  <option value="Weighing Equipment">Weighing Equipment</option>
-                  <option value="Laboratory Safety Equipment">Laboratory Safety Equipment</option>
-                  <option value="Other">Other</option>
-                </select>
-              </div>
-            </div>
-
-            <div className={styles.formGroup}>
-              <label htmlFor="type">Type</label>
-              <div className={styles.formInput}>
-                <select
-                  id="type"
-                  name="type"
-                  value={formData.type}
-                  onChange={handleInputChange}
-                  className={styles.inputSelect}
-                >
-                  <option value="other">Other</option>
-                  <option value="book">Book</option>
-                  <option value="journal">Journal</option>
-                  <option value="magazine">Magazine</option>
-                  <option value="digital">Digital</option>
+                  <option value="Books">Books</option>
+                  <option value="Modules">Modules</option>
+                  <option value="Equipment">Equipment</option>
                 </select>
               </div>
             </div>
@@ -219,67 +215,6 @@ function EditResourceModal({ isOpen, resource, onClose, onSave }: EditResourceMo
               </div>
             </div>
 
-            <div className={styles.formGroup}>
-              <label htmlFor="author">Author</label>
-              <div className={styles.formInput}>
-                <input
-                  type="text"
-                  id="author"
-                  name="author"
-                  value={formData.author}
-                  onChange={handleInputChange}
-                  placeholder="Author name"
-                  className={styles.inputText}
-                />
-              </div>
-            </div>
-
-            <div className={styles.formGroup}>
-              <label htmlFor="publisher">Publisher</label>
-              <div className={styles.formInput}>
-                <input
-                  type="text"
-                  id="publisher"
-                  name="publisher"
-                  value={formData.publisher}
-                  onChange={handleInputChange}
-                  placeholder="Publisher name"
-                  className={styles.inputText}
-                />
-              </div>
-            </div>
-
-            <div className={styles.formGroup}>
-              <label htmlFor="isbn">ISBN</label>
-              <div className={styles.formInput}>
-                <input
-                  type="text"
-                  id="isbn"
-                  name="isbn"
-                  value={formData.isbn}
-                  onChange={handleInputChange}
-                  placeholder="ISBN number"
-                  className={styles.inputText}
-                />
-              </div>
-            </div>
-
-            <div className={styles.formGroup}>
-              <label htmlFor="yearPublished">Year Published</label>
-              <div className={styles.formInput}>
-                <input
-                  type="number"
-                  id="yearPublished"
-                  name="yearPublished"
-                  value={formData.yearPublished}
-                  onChange={handleInputChange}
-                  placeholder="2024"
-                  min="1900"
-                  max={new Date().getFullYear()}
-                  className={styles.inputNumber}
-                />
-              </div>
-            </div>
           </div>
 
           <div className={styles.formGroup}>

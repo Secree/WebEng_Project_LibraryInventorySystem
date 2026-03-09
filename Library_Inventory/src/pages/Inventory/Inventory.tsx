@@ -22,17 +22,12 @@ interface InventoryProps {
 }
 
 interface EditableResource extends Resource {
-  description?: string;
-  author?: string;
-  publisher?: string;
-  isbn?: string;
-  yearPublished?: number;
   imageUrl?: string;
 }
 
-type FilterTab = 'All' | 'Books' | 'Modules' | 'Equipment';
+type CategoryTab = 'All' | 'Books' | 'Modules' | 'Equipment';
 
-const FILTER_TABS: FilterTab[] = ['All', 'Books', 'Modules', 'Equipment'];
+const CATEGORY_TABS: CategoryTab[] = ['All', 'Books', 'Modules', 'Equipment'];
 const MAX_BORROW_DURATION_DAYS = 14;
 
 const parseDateValue = (dateValue: string) => {
@@ -60,7 +55,7 @@ const getDueDateFromBorrowDate = (borrowDate: string) => {
   return dueDate.toISOString();
 };
 
-const mapResourceToTab = (resource: Resource): Exclude<FilterTab, 'All'> => {
+const mapResourceToCategoryTab = (resource: Resource): Exclude<CategoryTab, 'All'> => {
   // Use category (actual material type from CSV) if available, otherwise fall back to type
   const cat = (resource.category || resource.type || '').toLowerCase();
 
@@ -88,7 +83,7 @@ function Inventory({ userRole }: InventoryProps) {
   const { showAlert, showConfirm } = usePopupModal();
   const [resources, setResources] = useState<Resource[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedType, setSelectedType] = useState<FilterTab>('All');
+  const [selectedCategory, setSelectedCategory] = useState<CategoryTab>('All');
   const [isMultiSelectMode, setIsMultiSelectMode] = useState(false);
   const [selectedResourceIds, setSelectedResourceIds] = useState<string[]>([]);
   const [cartResourceIds, setCartResourceIds] = useState<string[]>([]);
@@ -381,6 +376,7 @@ function Inventory({ userRole }: InventoryProps) {
       const query = searchQuery.toLowerCase();
       filtered = filtered.filter((resource) =>
         resource.title.toLowerCase().includes(query) ||
+        resource.category.toLowerCase().includes(query) ||
         resource.type.toLowerCase().includes(query) ||
         resource.keywords.toLowerCase().includes(query) ||
         resource.suggestedTopics.toLowerCase().includes(query)
@@ -391,15 +387,15 @@ function Inventory({ userRole }: InventoryProps) {
   }, [resources, searchQuery]);
 
   const filteredResources = useMemo(() => {
-    if (selectedType === 'All') {
+    if (selectedCategory === 'All') {
       return searchMatchedResources;
     }
 
-    return searchMatchedResources.filter((resource) => mapResourceToTab(resource) === selectedType);
-  }, [searchMatchedResources, selectedType]);
+    return searchMatchedResources.filter((resource) => mapResourceToCategoryTab(resource) === selectedCategory);
+  }, [searchMatchedResources, selectedCategory]);
 
-  const typeCounts = useMemo(() => {
-    const counts: Record<FilterTab, number> = {
+  const categoryCounts = useMemo(() => {
+    const counts: Record<CategoryTab, number> = {
       All: searchMatchedResources.length,
       Books: 0,
       Modules: 0,
@@ -407,7 +403,7 @@ function Inventory({ userRole }: InventoryProps) {
     };
 
     searchMatchedResources.forEach((resource) => {
-      const tab = mapResourceToTab(resource);
+      const tab = mapResourceToCategoryTab(resource);
       counts[tab] += 1;
     });
 
@@ -618,7 +614,7 @@ function Inventory({ userRole }: InventoryProps) {
 
   const clearFilters = () => {
     setSearchQuery('');
-    setSelectedType('All');
+    setSelectedCategory('All');
   };
 
   if (loading) {
@@ -642,16 +638,16 @@ function Inventory({ userRole }: InventoryProps) {
 
       <SearchToolbar
         searchQuery={searchQuery}
-        selectedType={selectedType}
-        types={FILTER_TABS}
-        typeCounts={typeCounts}
+        selectedCategory={selectedCategory}
+        categories={CATEGORY_TABS}
+        categoryCounts={categoryCounts}
         filteredCount={filteredResources.length}
         totalCount={resources.length}
         showMultiSelectControls={userRole === 'user'}
         isMultiSelectMode={isMultiSelectMode}
         selectedCount={selectedResourceIds.length}
         onSearchChange={setSearchQuery}
-        onTypeChange={(value) => setSelectedType(value as FilterTab)}
+        onCategoryChange={(value) => setSelectedCategory(value as CategoryTab)}
         onToggleMultiSelectMode={handleToggleMultiSelectMode}
         onAddToCart={handleAddToCart}
         onCancelMultiSelect={handleCancelMultiSelect}

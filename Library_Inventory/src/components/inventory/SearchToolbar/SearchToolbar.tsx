@@ -4,16 +4,16 @@ import type { LucideIcon } from 'lucide-react';
 
 interface SearchToolbarProps {
   searchQuery: string;
-  selectedType: string;
-  types: string[];
-  typeCounts: Record<string, number>;
+  selectedCategory: string;
+  categories: string[];
+  categoryCounts: Record<string, number>;
   filteredCount: number;
   totalCount: number;
   showMultiSelectControls: boolean;
   isMultiSelectMode: boolean;
   selectedCount: number;
   onSearchChange: (value: string) => void;
-  onTypeChange: (value: string) => void;
+  onCategoryChange: (value: string) => void;
   onToggleMultiSelectMode: () => void;
   onAddToCart: () => void;
   onCancelMultiSelect: () => void;
@@ -25,16 +25,16 @@ interface SearchToolbarProps {
 
 function SearchToolbar({
   searchQuery,
-  selectedType,
-  types,
-  typeCounts,
+  selectedCategory,
+  categories,
+  categoryCounts,
   filteredCount,
   totalCount,
   showMultiSelectControls,
   isMultiSelectMode,
   selectedCount,
   onSearchChange,
-  onTypeChange,
+  onCategoryChange,
   onToggleMultiSelectMode,
   onAddToCart,
   onCancelMultiSelect,
@@ -43,7 +43,7 @@ function SearchToolbar({
   userRole,
   onAddResourceClick,
 }: SearchToolbarProps) {
-  const typeIcons: Record<string, LucideIcon> = {
+  const categoryIcons: Record<string, LucideIcon> = {
     All: Grid3X3,
     Books: BookOpen,
     Modules: Box,
@@ -75,24 +75,24 @@ function SearchToolbar({
 
         <div className={styles.filterBar}>
           <div className={styles.typeTabs}>
-            {types.map((type) => {
-              const TabIcon = typeIcons[type] ?? Grid3X3;
+            {categories.map((category) => {
+              const TabIcon = categoryIcons[category] ?? Grid3X3;
 
               return (
                 <button
-                  key={type}
+                  key={category}
                   type="button"
-                  className={`${styles.typeTab} ${selectedType === type ? styles.activeTypeTab : ''}`}
-                  onClick={() => onTypeChange(type)}
+                  className={`${styles.typeTab} ${selectedCategory === category ? styles.activeTypeTab : ''}`}
+                  onClick={() => onCategoryChange(category)}
                 >
                   <div>
                     <TabIcon className={styles.tabIcon} size={14} strokeWidth={2} aria-hidden="true" />
                   </div>
                   <div>
-                    <span>{type}</span>
+                    <span>{category}</span>
                   </div>
                   <div>
-                    <span className={styles.typeCounts}>({typeCounts[type] ?? 0})</span>
+                    <span className={styles.typeCounts}>({categoryCounts[category] ?? 0})</span>
                   </div> 
                 </button>
               );
