@@ -23,6 +23,7 @@ function AdminDashboard({ user, onLogout }: AdminDashboardProps) {
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState<'inventory' | 'users' | 'reservations'>('inventory');
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [showScrollTop, setShowScrollTop] = useState(false);
 
   const fetchUsers = async () => {
     setLoading(true);
@@ -59,6 +60,19 @@ function AdminDashboard({ user, onLogout }: AdminDashboardProps) {
     }
   }, [activeTab]);
 
+  useEffect(() => {
+    const handleScroll = () => {
+      setShowScrollTop(window.scrollY > 350);
+    };
+
+    handleScroll();
+    window.addEventListener('scroll', handleScroll);
+
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+    };
+  }, []);
+
   const handleInventoryManagement = () => {
     setSidebarOpen(false)
     setActiveTab('inventory')
@@ -77,6 +91,10 @@ function AdminDashboard({ user, onLogout }: AdminDashboardProps) {
   const handleLogout = () => {
     setSidebarOpen(false);
     onLogout();
+  };
+
+  const handleScrollToTop = () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
  
   return (
@@ -216,6 +234,16 @@ function AdminDashboard({ user, onLogout }: AdminDashboardProps) {
           <AdminReservations />
         )}
       </div>
+      {showScrollTop && (
+        <button
+          type="button"
+          className={styles.scrollTopButton}
+          onClick={handleScrollToTop}
+          aria-label="Scroll to top"
+        >
+          ↑
+        </button>
+      )}
     </div>
   );
 }
