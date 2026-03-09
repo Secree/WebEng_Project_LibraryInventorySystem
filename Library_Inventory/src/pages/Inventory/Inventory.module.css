@@ -509,6 +509,47 @@
   background: var(--inv-primary-soft);
 }
 
+.cardDeleteButton {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #fecaca;
+  background: #fee2e2;
+  color: #991b1b;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.3s;
+}
+
+.cardDeleteButton:hover:not(:disabled) {
+  background: #fecaca;
+}
+
+.cardDeleteButton:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.deleteSelectButton {
+  background: #fff1f2;
+  color: #be123c;
+  border: 1px solid #fecdd3;
+}
+
+.deleteSelectButton:hover:not(:disabled) {
+  background: #ffe4e6;
+}
+
+.deleteSelectActiveButton {
+  background: #dc2626;
+  color: #ffffff;
+}
+
+.deleteSelectActiveButton:hover:not(:disabled) {
+  background: #b91c1c;
+}
+
 .noResults {
   grid-column: 1 / -1;
   text-align: center;
@@ -587,6 +628,27 @@
   border: 1px solid var(--inv-border);
   background: var(--inv-surface);
   color: var(--inv-text);
+}
+
+.floatingDeleteBar {
+  background: #fff7f7;
+  border: 1px solid #fecaca;
+  box-shadow: 0 12px 24px rgba(127, 29, 29, 0.2);
+}
+
+.floatingDeleteActionButton {
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  padding: 10px 14px;
+  border: 1px solid #dc2626;
+  background: #dc2626;
+  color: #fff;
+}
+
+.floatingDeleteActionButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 /* Quantity Confirmation Bar */
@@ -1012,7 +1074,8 @@
   }
 
   .floatingCartAddButton,
-  .floatingCartCancelButton {
+  .floatingCartCancelButton,
+  .floatingDeleteActionButton {
     flex: 1;
   }
 

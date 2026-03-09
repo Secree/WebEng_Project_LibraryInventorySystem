@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { getAllResources, updateResource, reserveResource, createResource } from '../../services/api';
+import { getAllResources, updateResource, reserveResource, createResource, deleteResource } from '../../services/api';
 import styles from './Inventory.module.css';
 import SearchToolbar from '../../components/inventory/SearchToolbar/SearchToolbar';
 import ResourceGrid from '../../components/inventory/ResourceGrid';
@@ -91,6 +91,8 @@ function Inventory({ userRole }: InventoryProps) {
   const [error, setError] = useState('');
   const [pendingQuantityChanges, setPendingQuantityChanges] = useState<Record<string, number>>({});
   const [isSaving, setIsSaving] = useState(false);
+  const [isDeletingResources, setIsDeletingResources] = useState(false);
+  const [deletingResourceIds, setDeletingResourceIds] = useState<string[]>([]);
 
   // Fetch resources on mount
   useEffect(() => {
@@ -184,6 +186,114 @@ function Inventory({ userRole }: InventoryProps) {
     } catch (err: any) {
       console.error('Error creating resource:', err);
       throw err; // Re-throw to let the modal handle it
+    }
+  };
+
+  const handleDeleteSelectedResources = async () => {
+    if (selectedResourceIds.length === 0 || isDeletingResources) {
+      return;
+    }
+
+    const resourceCount = selectedResourceIds.length;
+    const confirmed = window.confirm(
+      `Delete ${resourceCount} resource${resourceCount > 1 ? 's' : ''}? This action cannot be undone.`
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    setIsDeletingResources(true);
+    setError('');
+
+    try {
+      const selectedIds = [...selectedResourceIds];
+      const deletionResults = await Promise.allSettled(
+        selectedIds.map((resourceId) => deleteResource(resourceId))
+      );
+
+      const successfulIds: string[] = [];
+      const failedIds: string[] = [];
+
+      deletionResults.forEach((result, index) => {
+        const resourceId = selectedIds[index];
+
+        if (result.status === 'fulfilled') {
+          successfulIds.push(resourceId);
+        } else {
+          failedIds.push(resourceId);
+        }
+      });
+
+      if (successfulIds.length > 0) {
+        const successfulIdSet = new Set(successfulIds);
+
+        setResources((prevResources) =>
+          prevResources.filter((resource) => !successfulIdSet.has(resource.id))
+        );
+        setCartResourceIds((prevIds) => prevIds.filter((id) => !successfulIdSet.has(id)));
+        setPendingQuantityChanges((prevChanges) =>
+          Object.fromEntries(
+            Object.entries(prevChanges).filter(([resourceId]) => !successfulIdSet.has(resourceId))
+          )
+        );
+      }
+
+      if (failedIds.length > 0) {
+        setSelectedResourceIds(failedIds);
+        setError(
+          `Deleted ${successfulIds.length} resource${successfulIds.length === 1 ? '' : 's'}. ` +
+          `Failed to delete ${failedIds.length} resource${failedIds.length === 1 ? '' : 's'}.`
+        );
+        return;
+      }
+
+      setSelectedResourceIds([]);
+      setIsMultiSelectMode(false);
+      alert(`Deleted ${successfulIds.length} resource${successfulIds.length === 1 ? '' : 's'} successfully.`);
+    } catch (err: any) {
+      console.error('Error deleting resources:', err);
+      setError('Failed to delete selected resources. Please try again.');
+    } finally {
+      setIsDeletingResources(false);
+    }
+  };
+
+  const handleDeleteSingleResource = async (resourceId: string) => {
+    if (deletingResourceIds.includes(resourceId)) {
+      return;
+    }
+
+    const targetResource = resources.find((resource) => resource.id === resourceId);
+    const confirmed = window.confirm(
+      `Delete \"${targetResource?.title || 'this resource'}\"? This action cannot be undone.`
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    setDeletingResourceIds((prev) => [...prev, resourceId]);
+    setError('');
+
+    try {
+      await deleteResource(resourceId);
+
+      setResources((prevResources) => prevResources.filter((resource) => resource.id !== resourceId));
+      setCartResourceIds((prevIds) => prevIds.filter((id) => id !== resourceId));
+      setSelectedResourceIds((prevIds) => prevIds.filter((id) => id !== resourceId));
+      setPendingQuantityChanges((prevChanges) => {
+        const nextChanges = { ...prevChanges };
+        delete nextChanges[resourceId];
+        return nextChanges;
+      });
+
+      alert('Resource deleted successfully.');
+    } catch (err: any) {
+      console.error('Error deleting resource:', err);
+      setError('Failed to delete resource. Please try again.');
+    } finally {
+      setDeletingResourceIds((prev) => prev.filter((id) => id !== resourceId));
     }
   };
 
@@ -466,6 +576,8 @@ function Inventory({ userRole }: InventoryProps) {
         onToggleMultiSelectMode={handleToggleMultiSelectMode}
         onAddToCart={handleAddToCart}
         onCancelMultiSelect={handleCancelMultiSelect}
+        onDeleteSelectedResources={handleDeleteSelectedResources}
+        isDeleteActionLoading={isDeletingResources}
         userRole={userRole}
         onAddResourceClick={() => setIsAddResourceModalOpen(true)}
       />
@@ -479,6 +591,8 @@ function Inventory({ userRole }: InventoryProps) {
         selectedResourceIds={selectedResourceIds}
         onReserve={handleReserve}
         onToggleResourceSelection={handleToggleResourceSelection}
+        onDeleteResource={userRole === 'admin' ? handleDeleteSingleResource : undefined}
+        deletingResourceIds={deletingResourceIds}
         onClearFilters={clearFilters}
         onQuantityUpdate={userRole === 'admin' ? handleQuantityUpdate : undefined}
       />
@@ -526,6 +640,33 @@ function Inventory({ userRole }: InventoryProps) {
               disabled={selectedResourceIds.length === 0}
             >
               Add to Cart ({selectedResourceIds.length})
+            </button>
+            <button
+              type="button"
+              className={styles.floatingCartCancelButton}
+              onClick={handleCancelMultiSelect}
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
+
+      {userRole === 'admin' && isMultiSelectMode && showFloatingCartActions && (
+        <div className={`${styles.floatingCartBar} ${styles.floatingDeleteBar}`}>
+          <p className={styles.floatingCartText}>
+            {selectedResourceIds.length > 0
+              ? `${selectedResourceIds.length} item(s) selected for deletion`
+              : 'Select resources to delete'}
+          </p>
+          <div className={styles.floatingCartButtons}>
+            <button
+              type="button"
+              className={styles.floatingDeleteActionButton}
+              onClick={handleDeleteSelectedResources}
+              disabled={selectedResourceIds.length === 0 || isDeletingResources}
+            >
+              {isDeletingResources ? 'Deleting...' : `Delete (${selectedResourceIds.length})`}
             </button>
             <button
               type="button"

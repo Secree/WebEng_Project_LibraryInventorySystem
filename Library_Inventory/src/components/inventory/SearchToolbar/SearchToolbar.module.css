@@ -175,6 +175,24 @@
   gap: 8px;
 }
 
+.deleteButton {
+  padding: 10px 15px;
+  border-radius: 10px;
+  border: 1px solid #fecaca;
+  background: #fee2e2;
+  color: #991b1b;
+  font-size: 14px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.deleteButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
 .cartButton {
   background: var(--inv-primary-soft);
   color: var(--inv-primary-dark);
@@ -226,7 +244,8 @@
   .addResourceButton,
   .multiSelectButton,
   .cartButton,
-  .cancelButton {
+  .cancelButton,
+  .deleteButton {
     display: flex;
     justify-content: center;
     width: 100%;
@@ -247,7 +266,8 @@
   .addResourceButton,
   .multiSelectButton,
   .cartButton,
-  .cancelButton {
+  .cancelButton,
+  .deleteButton {
     font-size: 13px;
   }
 }
@@ -262,7 +282,8 @@
   .addResourceButton,
   .multiSelectButton,
   .cartButton,
-  .cancelButton {
+  .cancelButton,
+  .deleteButton {
     font-size: x-small;
   }  
   

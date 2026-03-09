@@ -17,8 +17,10 @@ interface SearchToolbarProps {
   onToggleMultiSelectMode: () => void;
   onAddToCart: () => void;
   onCancelMultiSelect: () => void;
-  userRole?: string;  // New: Optional prop to check user role
-  onAddResourceClick?: () => void;  // New: Optional callback for the add resource button
+  onDeleteSelectedResources?: () => void;
+  isDeleteActionLoading?: boolean;
+  userRole?: string;
+  onAddResourceClick?: () => void;
 }
 
 function SearchToolbar({
@@ -36,6 +38,8 @@ function SearchToolbar({
   onToggleMultiSelectMode,
   onAddToCart,
   onCancelMultiSelect,
+  onDeleteSelectedResources,
+  isDeleteActionLoading,
   userRole,
   onAddResourceClick,
 }: SearchToolbarProps) {
@@ -95,16 +99,47 @@ function SearchToolbar({
             })}
           </div>
 
-          {(showMultiSelectControls || userRole === 'admin') && (  // Updated: Show toolbarActions for users or admins
+          {(showMultiSelectControls || userRole === 'admin') && (
             <div className={styles.toolbarActions}>
-              {userRole === 'admin' ? (  // New: Show admin button for admins
-                <button 
-                  className={styles.addResourceButton}
-                  onClick={onAddResourceClick}
-                >
-                  + Add New Resource
-                </button>
-              ) : isMultiSelectMode ? (  // Existing: Multi-select for users
+              {userRole === 'admin' ? (
+                <>
+                  <button
+                    type="button"
+                    className={styles.addResourceButton}
+                    onClick={onAddResourceClick}
+                  >
+                    + Add New Resource
+                  </button>
+
+                  {isMultiSelectMode ? (
+                    <>
+                      <button
+                        type="button"
+                        className={styles.deleteButton}
+                        onClick={onDeleteSelectedResources}
+                        disabled={selectedCount === 0 || isDeleteActionLoading}
+                      >
+                        {isDeleteActionLoading ? 'Deleting...' : `Delete (${selectedCount})`}
+                      </button>
+                      <button
+                        type="button"
+                        className={styles.cancelButton}
+                        onClick={onCancelMultiSelect}
+                      >
+                        Cancel
+                      </button>
+                    </>
+                  ) : (
+                    <button
+                      type="button"
+                      className={styles.deleteButton}
+                      onClick={onToggleMultiSelectMode}
+                    >
+                      Delete
+                    </button>
+                  )}
+                </>
+              ) : isMultiSelectMode ? (
                 <>
                   <button
                     type="button"
