@@ -2,6 +2,8 @@ import { useState } from 'react';
 import styles from '../../pages/Inventory/Inventory.module.css';
 import type { Resource } from './types';
 
+const FALLBACK_RESOURCE_IMAGE = '/resources/placeholder-resource.svg';
+
 interface ResourceGridProps {
   resources: Resource[];
   userRole?: string;
@@ -60,6 +62,7 @@ function ResourceGrid({
           const isSelected = selectedResourceIds.includes(resource.id);
           const isAvailable = resource.status === 'available' && resource.quantity > 0;
           const isDeletingCurrentResource = deletingResourceIds.includes(resource.id);
+          const imageSource = resource.pictureUrl?.trim() || FALLBACK_RESOURCE_IMAGE;
 
           return (
           <div
@@ -67,17 +70,16 @@ function ResourceGrid({
             className={`${styles.resourceCard} ${isSelected ? styles.selectedCard : ''}`}
           >
             <div className={styles.cardImage}>
-              {resource.pictureUrl ? (
-                <img
-                  src={resource.pictureUrl}
-                  alt={resource.title}
-                  onError={(e) => {
-                    (e.currentTarget as HTMLImageElement).style.display = 'none';
-                  }}
-                />
-              ) : (
-                <span style={{ fontSize: '48px', color: '#ccc' }}>📦</span>
-              )}
+              <img
+                src={imageSource}
+                alt={resource.title}
+                onError={(e) => {
+                  const target = e.currentTarget;
+                  if (!target.src.includes(FALLBACK_RESOURCE_IMAGE)) {
+                    target.src = FALLBACK_RESOURCE_IMAGE;
+                  }
+                }}
+              />
             </div>
 
             <div className={styles.cardHeader}>
