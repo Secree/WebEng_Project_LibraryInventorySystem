@@ -9,6 +9,7 @@ interface ResourceGridProps {
   selectedResourceIds: string[];
   onReserve: (resourceId: string) => void;
   onToggleResourceSelection: (resourceId: string) => void;
+  onEditResource?: (resource: Resource) => void;
   onDeleteResource?: (resourceId: string) => void;
   deletingResourceIds?: string[];
   onClearFilters: () => void;
@@ -22,6 +23,7 @@ function ResourceGrid({
   selectedResourceIds,
   onReserve,
   onToggleResourceSelection,
+  onEditResource,
   onDeleteResource,
   deletingResourceIds = [],
   onClearFilters,
@@ -154,14 +156,24 @@ function ResourceGrid({
 
             {userRole === 'admin' && !isMultiSelectMode && (
               <div className={styles.cardFooter}>
-                <button
-                  type="button"
-                  className={styles.cardDeleteButton}
-                  onClick={() => onDeleteResource?.(resource.id)}
-                  disabled={isDeletingCurrentResource}
-                >
-                  {isDeletingCurrentResource ? 'Deleting...' : 'Delete'}
-                </button>
+                <div className={styles.cardAdminActions}>
+                  <button
+                    type="button"
+                    className={styles.cardEditButton}
+                    onClick={() => onEditResource?.(resource)}
+                    disabled={isDeletingCurrentResource}
+                  >
+                    Edit
+                  </button>
+                  <button
+                    type="button"
+                    className={styles.cardDeleteButton}
+                    onClick={() => onDeleteResource?.(resource.id)}
+                    disabled={isDeletingCurrentResource}
+                  >
+                    {isDeletingCurrentResource ? 'Deleting...' : 'Delete'}
+                  </button>
+                </div>
               </div>
             )}
 

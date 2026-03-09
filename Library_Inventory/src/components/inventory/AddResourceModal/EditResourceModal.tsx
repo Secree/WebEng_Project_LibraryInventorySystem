@@ -1,63 +1,92 @@
-import { useState, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import styles from './AddResourceModal.module.css';
+import type { Resource } from '../types';
 
-interface AddResourceModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  onSave: (resourceData: any) => Promise<void>;
+interface EditableResource extends Resource {
+  author?: string;
+  publisher?: string;
+  isbn?: string;
+  yearPublished?: number;
+  imageUrl?: string;
 }
 
-function AddResourceModal({ isOpen, onClose, onSave }: AddResourceModalProps) {
-  const [formData, setFormData] = useState({
-    title: '',
-    category: '',
-    type: 'other',
-    quantity: 1,
-    suggestedTopics: '',
-    keywords: '',
-    author: '',
-    publisher: '',
-    isbn: '',
-    yearPublished: '',
-  });
+interface EditResourceModalProps {
+  isOpen: boolean;
+  resource: EditableResource | null;
+  onClose: () => void;
+  onSave: (resourceId: string, resourceData: any) => Promise<void>;
+}
+
+const getFormDataFromResource = (resource: EditableResource | null) => ({
+  title: resource?.title || '',
+  category: resource?.category || '',
+  type: resource?.type || 'other',
+  quantity: resource?.quantity ?? 1,
+  suggestedTopics: resource?.suggestedTopics || '',
+  keywords: resource?.keywords || '',
+  author: resource?.author || '',
+  publisher: resource?.publisher || '',
+  isbn: resource?.isbn || '',
+  yearPublished: resource?.yearPublished ?? '',
+});
+
+function EditResourceModal({ isOpen, resource, onClose, onSave }: EditResourceModalProps) {
+  const [formData, setFormData] = useState(getFormDataFromResource(resource));
   const [imageFile, setImageFile] = useState<File | null>(null);
-  const [imagePreview, setImagePreview] = useState<string>('');
+  const [imagePreview, setImagePreview] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Prevent unused variable warning (kept for potential future file upload functionality)
   void imageFile;
+
+  useEffect(() => {
+    if (!isOpen) {
+      return;
+    }
+
+    setFormData(getFormDataFromResource(resource));
+    setImagePreview(resource?.pictureUrl || resource?.imageUrl || '');
+    setImageFile(null);
+    setError('');
+
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  }, [isOpen, resource]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      [name]: name === 'quantity' || name === 'yearPublished' ? (value ? parseInt(value) : '') : value
+      [name]: name === 'quantity' || name === 'yearPublished' ? (value ? parseInt(value, 10) : '') : value,
     }));
   };
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      if (file.size > 5 * 1024 * 1024) { // 5MB limit
-        setError('Image size should be less than 5MB');
-        return;
-      }
-
-      setImageFile(file);
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setImagePreview(reader.result as string);
-      };
-      reader.readAsDataURL(file);
-      setError('');
+    if (!file) {
+      return;
     }
+
+    if (file.size > 5 * 1024 * 1024) {
+      setError('Image size should be less than 5MB');
+      return;
+    }
+
+    setImageFile(file);
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setImagePreview(reader.result as string);
+    };
+    reader.readAsDataURL(file);
+    setError('');
   };
 
   const handleRemoveImage = () => {
     setImageFile(null);
     setImagePreview('');
+
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
@@ -65,7 +94,11 @@ function AddResourceModal({ isOpen, onClose, onSave }: AddResourceModalProps) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
+    if (!resource) {
+      return;
+    }
+
     if (!formData.title || !formData.category) {
       setError('Title and Category are required');
       return;
@@ -80,41 +113,27 @@ function AddResourceModal({ isOpen, onClose, onSave }: AddResourceModalProps) {
         imageUrl: imagePreview || '',
         pictureUrl: imagePreview || '',
         availableQuantity: formData.quantity,
-        status: 'available'
+        status: Number(formData.quantity) > 0 ? 'available' : 'reserved',
       };
 
-      await onSave(resourceData);
-      
-      // Reset form
-      setFormData({
-        title: '',
-        category: '',
-        type: 'other',
-        quantity: 1,
-        suggestedTopics: '',
-        keywords: '',
-        author: '',
-        publisher: '',
-        isbn: '',
-        yearPublished: '',
-      });
-      setImageFile(null);
-      setImagePreview('');
+      await onSave(resource.id, resourceData);
       onClose();
     } catch (err: any) {
-      setError(err.response?.data?.error || 'Failed to create resource');
+      setError(err.response?.data?.error || 'Failed to update resource');
     } finally {
       setLoading(false);
     }
   };
 
-  if (!isOpen) return null;
+  if (!isOpen || !resource) {
+    return null;
+  }
 
   return (
     <div className={styles.modalOverlay} onClick={onClose}>
       <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
         <div className={styles.modalHeader}>
-          <h2>Add New Resource</h2>
+          <h2>Edit Resource</h2>
           <button className={styles.closeButton} onClick={onClose}>&times;</button>
         </div>
 
@@ -193,7 +212,7 @@ function AddResourceModal({ isOpen, onClose, onSave }: AddResourceModalProps) {
                   name="quantity"
                   value={formData.quantity}
                   onChange={handleInputChange}
-                  min="1"
+                  min="0"
                   required
                   className={styles.inputNumber}
                 />
@@ -287,7 +306,7 @@ function AddResourceModal({ isOpen, onClose, onSave }: AddResourceModalProps) {
                 value={formData.keywords}
                 onChange={handleInputChange}
                 rows={2}
-                placeholder="Keywords for searching (comma separated)"
+                placeholder="Keywords for searching"
                 className={styles.inputText}
               />
             </div>
@@ -329,7 +348,7 @@ function AddResourceModal({ isOpen, onClose, onSave }: AddResourceModalProps) {
               Cancel
             </button>
             <button type="submit" className={styles.saveButton} disabled={loading}>
-              {loading ? 'Saving...' : 'Add Resource'}
+              {loading ? 'Saving...' : 'Save Changes'}
             </button>
           </div>
         </form>
@@ -338,4 +357,4 @@ function AddResourceModal({ isOpen, onClose, onSave }: AddResourceModalProps) {
   );
 }
 
-export default AddResourceModal;
+export default EditResourceModal;

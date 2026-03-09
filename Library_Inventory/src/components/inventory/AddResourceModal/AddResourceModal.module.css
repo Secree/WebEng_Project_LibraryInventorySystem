@@ -22,6 +22,8 @@
   overflow-y: auto;
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
   margin: auto;
+  color: #111827;
+  color-scheme: light;
 }
 
 .modalHeader {
@@ -108,10 +110,32 @@
   border: 1px solid #d1d5db;
   border-radius: 6px;
   background-color: #fff;
-  color: rgb(0, 0, 0);
+  color: #111827;
+  -webkit-text-fill-color: #111827;
+  caret-color: #111827;
   font-size: 14px;
   transition: all 0.2s;
   font-family: inherit;
+}
+
+.modalContent input,
+.modalContent select,
+.modalContent textarea {
+  color-scheme: light;
+}
+
+.formGroup textarea {
+  color: #111827;
+  -webkit-text-fill-color: #111827;
+  background-color: #fff;
+  caret-color: #111827;
+}
+
+.inputText::placeholder,
+.inputNumber::placeholder,
+.formGroup textarea::placeholder {
+  color: #6b7280;
+  opacity: 1;
 }
 
 .formGroup input:focus,

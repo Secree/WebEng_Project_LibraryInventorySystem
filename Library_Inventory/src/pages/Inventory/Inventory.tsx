@@ -7,6 +7,7 @@ import CheckoutModal from '../../components/inventory/CheckoutModal';
 import MultiCheckoutModal from '../../components/inventory/MultiCheckoutModal';
 import CartOverviewModal from '../../components/inventory/CartOverviewModal';
 import AddResourceModal from '../../components/inventory/AddResourceModal/AddResourceModal';
+import EditResourceModal from '../../components/inventory/AddResourceModal/EditResourceModal';
 import { usePopupModal } from '../../components/common/PopupModalProvider';
 import type {
   MultiReservationFailureItem,
@@ -18,6 +19,15 @@ import type {
 
 interface InventoryProps {
   userRole?: string;
+}
+
+interface EditableResource extends Resource {
+  description?: string;
+  author?: string;
+  publisher?: string;
+  isbn?: string;
+  yearPublished?: number;
+  imageUrl?: string;
 }
 
 type FilterTab = 'All' | 'Books' | 'Modules' | 'Equipment';
@@ -88,6 +98,8 @@ function Inventory({ userRole }: InventoryProps) {
   const [isMultiCheckoutModalOpen, setIsMultiCheckoutModalOpen] = useState(false);
   const [isCartModalOpen, setIsCartModalOpen] = useState(false);
   const [isAddResourceModalOpen, setIsAddResourceModalOpen] = useState(false);
+  const [isEditResourceModalOpen, setIsEditResourceModalOpen] = useState(false);
+  const [resourceToEdit, setResourceToEdit] = useState<EditableResource | null>(null);
   const [showFloatingCartActions, setShowFloatingCartActions] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -191,6 +203,47 @@ function Inventory({ userRole }: InventoryProps) {
     } catch (err: any) {
       console.error('Error creating resource:', err);
       throw err; // Re-throw to let the modal handle it
+    }
+  };
+
+  const handleOpenEditResource = (resource: Resource) => {
+    setResourceToEdit(resource as EditableResource);
+    setIsEditResourceModalOpen(true);
+  };
+
+  const handleCloseEditResourceModal = () => {
+    setIsEditResourceModalOpen(false);
+    setResourceToEdit(null);
+  };
+
+  const handleSaveEditedResource = async (resourceId: string, resourceData: any) => {
+    try {
+      const updatedResource = await updateResource(resourceId, resourceData);
+
+      setResources((prevResources) =>
+        prevResources.map((resource) =>
+          resource.id === resourceId ? updatedResource : resource
+        )
+      );
+
+      setPendingQuantityChanges((prevChanges) => {
+        if (!(resourceId in prevChanges)) {
+          return prevChanges;
+        }
+
+        const nextChanges = { ...prevChanges };
+        delete nextChanges[resourceId];
+        return nextChanges;
+      });
+
+      setError('');
+      await showAlert('Resource updated successfully!', {
+        title: 'Success',
+        tone: 'success',
+      });
+    } catch (err: any) {
+      console.error('Error updating resource:', err);
+      throw err;
     }
   };
 
@@ -617,6 +670,7 @@ function Inventory({ userRole }: InventoryProps) {
         selectedResourceIds={selectedResourceIds}
         onReserve={handleReserve}
         onToggleResourceSelection={handleToggleResourceSelection}
+        onEditResource={userRole === 'admin' ? handleOpenEditResource : undefined}
         onDeleteResource={userRole === 'admin' ? handleDeleteSingleResource : undefined}
         deletingResourceIds={deletingResourceIds}
         onClearFilters={clearFilters}
@@ -732,6 +786,13 @@ function Inventory({ userRole }: InventoryProps) {
         isOpen={isAddResourceModalOpen}
         onClose={() => setIsAddResourceModalOpen(false)}
         onSave={handleSaveNewResource}
+      />
+
+      <EditResourceModal
+        isOpen={isEditResourceModalOpen}
+        resource={resourceToEdit}
+        onClose={handleCloseEditResourceModal}
+        onSave={handleSaveEditedResource}
       />
     </div>
   );

@@ -478,6 +478,11 @@
   border-top: 1px solid #f0f0f0;
 }
 
+.cardAdminActions {
+  display: flex;
+  gap: 8px;
+}
+
 .reserveButton {
   width: 100%;
   padding: 10px;
@@ -509,17 +514,40 @@
   background: var(--inv-primary-soft);
 }
 
+.cardEditButton,
 .cardDeleteButton {
-  width: 100%;
   padding: 10px;
-  border: 1px solid #fecaca;
-  background: #fee2e2;
-  color: #991b1b;
   border-radius: 6px;
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
   transition: background 0.3s;
+}
+
+.cardEditButton {
+  flex: 0 0 auto;
+  min-width: 74px;
+  padding: 8px 12px;
+  font-size: 13px;
+  border: 1px solid var(--inv-border);
+  background: var(--inv-primary-soft);
+  color: var(--inv-primary-dark);
+}
+
+.cardEditButton:hover:not(:disabled) {
+  background: #dbeafe;
+}
+
+.cardEditButton:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.cardDeleteButton {
+  flex: 1;
+  border: 1px solid #fecaca;
+  background: #fee2e2;
+  color: #991b1b;
 }
 
 .cardDeleteButton:hover:not(:disabled) {
