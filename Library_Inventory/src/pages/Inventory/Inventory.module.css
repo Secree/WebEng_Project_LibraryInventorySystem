@@ -883,6 +883,19 @@
   background: var(--inv-surface);
   padding: 8px 10px;
   font-size: 14px;
+  color-scheme: light;
+}
+
+.modalDateInput::-webkit-calendar-picker-indicator {
+  opacity: 1;
+  filter: invert(15%) sepia(12%) saturate(861%) hue-rotate(175deg) brightness(94%) contrast(90%);
+  cursor: pointer;
+}
+
+@media (forced-colors: active) {
+  .modalDateInput::-webkit-calendar-picker-indicator {
+    filter: none;
+  }
 }
 
 .modalActions {
