@@ -7,6 +7,7 @@ import CheckoutModal from '../../components/inventory/CheckoutModal';
 import MultiCheckoutModal from '../../components/inventory/MultiCheckoutModal';
 import CartOverviewModal from '../../components/inventory/CartOverviewModal';
 import AddResourceModal from '../../components/inventory/AddResourceModal/AddResourceModal';
+import { usePopupModal } from '../../components/common/PopupModalProvider';
 import type {
   MultiReservationFailureItem,
   MultiReservationReceipt,
@@ -74,6 +75,7 @@ const mapResourceToTab = (resource: Resource): Exclude<FilterTab, 'All'> => {
 };
 
 function Inventory({ userRole }: InventoryProps) {
+  const { showAlert, showConfirm } = usePopupModal();
   const [resources, setResources] = useState<Resource[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedType, setSelectedType] = useState<FilterTab>('All');
@@ -182,7 +184,10 @@ function Inventory({ userRole }: InventoryProps) {
       const newResource = await createResource(resourceData);
       setResources(prev => [newResource, ...prev]);
       setError('');
-      alert('Resource added successfully!');
+      void showAlert('Resource added successfully!', {
+        title: 'Success',
+        tone: 'success',
+      });
     } catch (err: any) {
       console.error('Error creating resource:', err);
       throw err; // Re-throw to let the modal handle it
@@ -195,8 +200,13 @@ function Inventory({ userRole }: InventoryProps) {
     }
 
     const resourceCount = selectedResourceIds.length;
-    const confirmed = window.confirm(
-      `Delete ${resourceCount} resource${resourceCount > 1 ? 's' : ''}? This action cannot be undone.`
+    const confirmed = await showConfirm(
+      `Delete ${resourceCount} resource${resourceCount > 1 ? 's' : ''}? This action cannot be undone.`,
+      {
+        title: 'Confirm Deletion',
+        confirmText: 'Delete',
+        tone: 'danger',
+      }
     );
 
     if (!confirmed) {
@@ -250,7 +260,13 @@ function Inventory({ userRole }: InventoryProps) {
 
       setSelectedResourceIds([]);
       setIsMultiSelectMode(false);
-      alert(`Deleted ${successfulIds.length} resource${successfulIds.length === 1 ? '' : 's'} successfully.`);
+      await showAlert(
+        `Deleted ${successfulIds.length} resource${successfulIds.length === 1 ? '' : 's'} successfully.`,
+        {
+          title: 'Success',
+          tone: 'success',
+        }
+      );
     } catch (err: any) {
       console.error('Error deleting resources:', err);
       setError('Failed to delete selected resources. Please try again.');
@@ -265,8 +281,13 @@ function Inventory({ userRole }: InventoryProps) {
     }
 
     const targetResource = resources.find((resource) => resource.id === resourceId);
-    const confirmed = window.confirm(
-      `Delete \"${targetResource?.title || 'this resource'}\"? This action cannot be undone.`
+    const confirmed = await showConfirm(
+      `Delete \"${targetResource?.title || 'this resource'}\"? This action cannot be undone.`,
+      {
+        title: 'Confirm Deletion',
+        confirmText: 'Delete',
+        tone: 'danger',
+      }
     );
 
     if (!confirmed) {
@@ -288,7 +309,10 @@ function Inventory({ userRole }: InventoryProps) {
         return nextChanges;
       });
 
-      alert('Resource deleted successfully.');
+      await showAlert('Resource deleted successfully.', {
+        title: 'Success',
+        tone: 'success',
+      });
     } catch (err: any) {
       console.error('Error deleting resource:', err);
       setError('Failed to delete resource. Please try again.');
@@ -439,7 +463,9 @@ function Inventory({ userRole }: InventoryProps) {
     );
 
     if (availableItems.length === 0) {
-      alert('No available materials to checkout.');
+      void showAlert('No available materials to checkout.', {
+        title: 'No Available Items',
+      });
       return;
     }
 
