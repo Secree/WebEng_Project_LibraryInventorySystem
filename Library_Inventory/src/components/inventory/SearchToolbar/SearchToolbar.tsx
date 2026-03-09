@@ -17,6 +17,8 @@ interface SearchToolbarProps {
   onToggleMultiSelectMode: () => void;
   onAddToCart: () => void;
   onCancelMultiSelect: () => void;
+  userRole?: string;  // New: Optional prop to check user role
+  onAddResourceClick?: () => void;  // New: Optional callback for the add resource button
 }
 
 function SearchToolbar({
@@ -34,6 +36,8 @@ function SearchToolbar({
   onToggleMultiSelectMode,
   onAddToCart,
   onCancelMultiSelect,
+  userRole,
+  onAddResourceClick,
 }: SearchToolbarProps) {
   const typeIcons: Record<string, LucideIcon> = {
     All: Grid3X3,
@@ -91,9 +95,16 @@ function SearchToolbar({
             })}
           </div>
 
-          {showMultiSelectControls && (
+          {(showMultiSelectControls || userRole === 'admin') && (  // Updated: Show toolbarActions for users or admins
             <div className={styles.toolbarActions}>
-              {isMultiSelectMode ? (
+              {userRole === 'admin' ? (  // New: Show admin button for admins
+                <button 
+                  className={styles.addResourceButton}
+                  onClick={onAddResourceClick}
+                >
+                  + Add New Resource
+                </button>
+              ) : isMultiSelectMode ? (  // Existing: Multi-select for users
                 <>
                   <button
                     type="button"

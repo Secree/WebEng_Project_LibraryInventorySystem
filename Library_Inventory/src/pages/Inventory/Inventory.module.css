@@ -19,8 +19,6 @@
 .header {
   text-align: center;
   margin-bottom: 18px;
-  display: flex;
-  justify-content: space-between;
   align-items: center;
   flex-wrap: wrap;
   gap: 16px;
@@ -35,25 +33,6 @@
 .subtitle {
   color: #667892;
   font-size: 18px;
-}
-
-.addResourceButton {
-  background-color: var(--inv-primary);
-  color: white;
-  border: none;
-  padding: 12px 24px;
-  border-radius: 8px;
-  font-size: 16px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s;
-  white-space: nowrap;
-}
-
-.addResourceButton:hover {
-  background-color: var(--inv-primary-dark);
-  transform: translateY(-2px);
-  box-shadow: 0 4px 8px rgba(47, 102, 216, 0.3);
 }
 
 @media (max-width: 1000px) {

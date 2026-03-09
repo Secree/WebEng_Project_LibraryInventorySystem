@@ -6,6 +6,7 @@ import ResourceGrid from '../../components/inventory/ResourceGrid';
 import CheckoutModal from '../../components/inventory/CheckoutModal';
 import MultiCheckoutModal from '../../components/inventory/MultiCheckoutModal';
 import CartOverviewModal from '../../components/inventory/CartOverviewModal';
+import AddResourceModal from '../../components/inventory/AddResourceModal/AddResourceModal';
 import type {
   MultiReservationFailureItem,
   MultiReservationReceipt,
@@ -13,7 +14,6 @@ import type {
   Resource,
   ReservationReceipt,
 } from '../../components/inventory/types';
-import AddResourceModal from '../../components/inventory/AddResourceModal';
 
 interface InventoryProps {
   userRole?: string;
@@ -449,14 +449,6 @@ function Inventory({ userRole }: InventoryProps) {
           <h1 className={styles.title}>Find Your Resources</h1>
           <p className={styles.subtitle}>Search through our collection of books, modules, and equipment</p>
         </div>
-        {userRole === 'admin' && (
-          <button 
-            className={styles.addResourceButton}
-            onClick={() => setIsAddResourceModalOpen(true)}
-          >
-            + Add New Resource
-          </button>
-        )}
       </div>
 
       <SearchToolbar
@@ -474,6 +466,8 @@ function Inventory({ userRole }: InventoryProps) {
         onToggleMultiSelectMode={handleToggleMultiSelectMode}
         onAddToCart={handleAddToCart}
         onCancelMultiSelect={handleCancelMultiSelect}
+        userRole={userRole}
+        onAddResourceClick={() => setIsAddResourceModalOpen(true)}
       />
 
       {error && <div className={styles.error}>{error}</div>}
