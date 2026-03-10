@@ -178,6 +178,12 @@
   background-color: #f9fafb;
 }
 
+.dragOver {
+  border-color: #3b82f6 !important;
+  background-color: #eff6ff !important;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+}
+
 .uploadPlaceholder span {
   font-size: 48px;
   display: block;
