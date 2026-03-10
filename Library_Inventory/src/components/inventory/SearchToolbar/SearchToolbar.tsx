@@ -21,6 +21,8 @@ interface SearchToolbarProps {
   isDeleteActionLoading?: boolean;
   userRole?: string;
   onAddResourceClick?: () => void;
+  onImportSpreadsheetClick?: () => void;
+  isImportingSpreadsheet?: boolean;
 }
 
 function SearchToolbar({
@@ -42,6 +44,8 @@ function SearchToolbar({
   isDeleteActionLoading,
   userRole,
   onAddResourceClick,
+  onImportSpreadsheetClick,
+  isImportingSpreadsheet,
 }: SearchToolbarProps) {
   const categoryIcons: Record<string, LucideIcon> = {
     All: Grid3X3,
@@ -109,6 +113,15 @@ function SearchToolbar({
                     onClick={onAddResourceClick}
                   >
                     + Add New Resource
+                  </button>
+
+                  <button
+                    type="button"
+                    className={styles.importResourceButton}
+                    onClick={onImportSpreadsheetClick}
+                    disabled={isImportingSpreadsheet}
+                  >
+                    {isImportingSpreadsheet ? 'Importing...' : 'Import Excel'}
                   </button>
 
                   {isMultiSelectMode ? (

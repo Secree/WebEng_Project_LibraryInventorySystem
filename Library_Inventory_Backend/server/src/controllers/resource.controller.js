@@ -67,6 +67,39 @@ const resourceController = {
     } catch (error) {
       res.status(400).json({ error: error.message });
     }
+  },
+
+  // Import resources from spreadsheet upload
+  importResourcesFromSpreadsheet: async (req, res) => {
+    try {
+      if (!req.file || !req.file.buffer) {
+        return res.status(400).json({ error: 'Spreadsheet file is required' });
+      }
+
+      const fileName = String(req.file.originalname || '');
+      const allowedExtension = /\.(xlsx|xls|csv)$/i;
+
+      if (!allowedExtension.test(fileName)) {
+        return res.status(400).json({
+          error: 'Unsupported file type. Please upload .xlsx, .xls, or .csv',
+        });
+      }
+
+      const replaceExisting = String(req.body?.replaceExisting || '').toLowerCase() === 'true';
+
+      const summary = await resourceService.importResourcesFromSpreadsheet({
+        buffer: req.file.buffer,
+        fileName,
+        replaceExisting,
+      });
+
+      res.status(201).json({
+        message: `Successfully imported ${summary.importedCount} resources`,
+        summary,
+      });
+    } catch (error) {
+      res.status(400).json({ error: error.message });
+    }
   }
 };
 

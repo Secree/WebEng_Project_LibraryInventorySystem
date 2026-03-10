@@ -1,5 +1,12 @@
-import { useState, useEffect, useMemo } from 'react';
-import { getAllResources, updateResource, reserveResource, createResource, deleteResource } from '../../services/api';
+import { useState, useEffect, useMemo, useRef, type ChangeEvent } from 'react';
+import {
+  getAllResources,
+  updateResource,
+  reserveResource,
+  createResource,
+  deleteResource,
+  importResourcesSpreadsheet,
+} from '../../services/api';
 import styles from './Inventory.module.css';
 import SearchToolbar from '../../components/inventory/SearchToolbar/SearchToolbar';
 import ResourceGrid from '../../components/inventory/ResourceGrid';
@@ -81,6 +88,7 @@ const mapResourceToCategoryTab = (resource: Resource): Exclude<CategoryTab, 'All
 
 function Inventory({ userRole }: InventoryProps) {
   const { showAlert, showConfirm } = usePopupModal();
+  const spreadsheetInputRef = useRef<HTMLInputElement | null>(null);
   const [resources, setResources] = useState<Resource[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<CategoryTab>('All');
@@ -102,6 +110,7 @@ function Inventory({ userRole }: InventoryProps) {
   const [isSaving, setIsSaving] = useState(false);
   const [isDeletingResources, setIsDeletingResources] = useState(false);
   const [deletingResourceIds, setDeletingResourceIds] = useState<string[]>([]);
+  const [isImportingSpreadsheet, setIsImportingSpreadsheet] = useState(false);
 
   // Fetch resources on mount
   useEffect(() => {
@@ -137,6 +146,61 @@ function Inventory({ userRole }: InventoryProps) {
       console.error('Error fetching resources:', err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleImportSpreadsheetClick = () => {
+    if (userRole !== 'admin' || isImportingSpreadsheet) {
+      return;
+    }
+
+    spreadsheetInputRef.current?.click();
+  };
+
+  const handleSpreadsheetFileChange = async (event: ChangeEvent<HTMLInputElement>) => {
+    const selectedFile = event.target.files?.[0];
+    if (!selectedFile) {
+      return;
+    }
+
+    const allowedSpreadsheet = /\.(xlsx|xls|csv)$/i;
+    if (!allowedSpreadsheet.test(selectedFile.name)) {
+      await showAlert('Please upload a valid .xlsx, .xls, or .csv file.', {
+        title: 'Invalid File',
+        tone: 'danger',
+      });
+      event.target.value = '';
+      return;
+    }
+
+    setIsImportingSpreadsheet(true);
+    setError('');
+
+    try {
+      const response = await importResourcesSpreadsheet(selectedFile);
+      await fetchResources();
+
+      await showAlert(
+        `Imported ${response.summary.importedCount} row(s). Placeholder image applied to ${response.summary.placeholderAppliedCount} row(s).`,
+        {
+          title: 'Import Complete',
+          tone: 'success',
+        }
+      );
+    } catch (err: any) {
+      const message =
+        err?.response?.data?.error ||
+        err?.response?.data?.message ||
+        'Failed to import spreadsheet. Please try again.';
+
+      setError(message);
+      await showAlert(message, {
+        title: 'Import Failed',
+        tone: 'danger',
+      });
+    } finally {
+      setIsImportingSpreadsheet(false);
+      event.target.value = '';
     }
   };
 
@@ -636,6 +700,14 @@ function Inventory({ userRole }: InventoryProps) {
         </div>
       </div>
 
+      <input
+        ref={spreadsheetInputRef}
+        type="file"
+        accept=".xlsx,.xls,.csv"
+        onChange={handleSpreadsheetFileChange}
+        style={{ display: 'none' }}
+      />
+
       <SearchToolbar
         searchQuery={searchQuery}
         selectedCategory={selectedCategory}
@@ -655,6 +727,8 @@ function Inventory({ userRole }: InventoryProps) {
         isDeleteActionLoading={isDeletingResources}
         userRole={userRole}
         onAddResourceClick={() => setIsAddResourceModalOpen(true)}
+        onImportSpreadsheetClick={handleImportSpreadsheetClick}
+        isImportingSpreadsheet={isImportingSpreadsheet}
       />
 
       {error && <div className={styles.error}>{error}</div>}

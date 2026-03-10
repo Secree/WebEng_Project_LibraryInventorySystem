@@ -130,6 +130,21 @@ export interface AdminCancelApprovedReservationResponse {
   resource: Resource | null;
 }
 
+export interface ResourceImportSummary {
+  fileName: string;
+  sheetName: string;
+  totalRows: number;
+  importedCount: number;
+  skippedCount: number;
+  placeholderAppliedCount: number;
+  replaceExisting: boolean;
+}
+
+export interface ResourceImportResponse {
+  message: string;
+  summary: ResourceImportSummary;
+}
+
 // Resource API functions
 export const getAllResources = async () => {
   const response = await api.get('/resources');
@@ -154,6 +169,20 @@ export const updateResource = async (id: string, resourceData: any) => {
 export const deleteResource = async (id: string) => {
   const response = await api.delete(`/resources/${id}`);
   return response.data;
+};
+
+export const importResourcesSpreadsheet = async (file: File, replaceExisting = false) => {
+  const formData = new FormData();
+  formData.append('file', file);
+  formData.append('replaceExisting', String(replaceExisting));
+
+  const response = await api.post('/resources/import', formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data',
+    },
+  });
+
+  return response.data as ResourceImportResponse;
 };
 
 export const reserveResource = async (
