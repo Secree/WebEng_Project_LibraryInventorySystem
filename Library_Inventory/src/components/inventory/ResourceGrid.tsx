@@ -2,6 +2,8 @@ import { useState } from 'react';
 import styles from '../../pages/Inventory/Inventory.module.css';
 import type { Resource } from './types';
 
+const FALLBACK_RESOURCE_IMAGE = '/resources/placeholder-resource.svg';
+
 interface ResourceGridProps {
   resources: Resource[];
   userRole?: string;
@@ -9,6 +11,9 @@ interface ResourceGridProps {
   selectedResourceIds: string[];
   onReserve: (resourceId: string) => void;
   onToggleResourceSelection: (resourceId: string) => void;
+  onEditResource?: (resource: Resource) => void;
+  onDeleteResource?: (resourceId: string) => void;
+  deletingResourceIds?: string[];
   onClearFilters: () => void;
   onQuantityUpdate?: (resourceId: string, newQuantity: number) => Promise<void>;
 }
@@ -20,6 +25,9 @@ function ResourceGrid({
   selectedResourceIds,
   onReserve,
   onToggleResourceSelection,
+  onEditResource,
+  onDeleteResource,
+  deletingResourceIds = [],
   onClearFilters,
   onQuantityUpdate,
 }: ResourceGridProps) {
@@ -53,6 +61,8 @@ function ResourceGrid({
         resources.map((resource) => {
           const isSelected = selectedResourceIds.includes(resource.id);
           const isAvailable = resource.status === 'available' && resource.quantity > 0;
+          const isDeletingCurrentResource = deletingResourceIds.includes(resource.id);
+          const imageSource = resource.pictureUrl?.trim() || FALLBACK_RESOURCE_IMAGE;
 
           return (
           <div
@@ -60,17 +70,16 @@ function ResourceGrid({
             className={`${styles.resourceCard} ${isSelected ? styles.selectedCard : ''}`}
           >
             <div className={styles.cardImage}>
-              {resource.pictureUrl ? (
-                <img
-                  src={resource.pictureUrl}
-                  alt={resource.title}
-                  onError={(e) => {
-                    (e.currentTarget as HTMLImageElement).style.display = 'none';
-                  }}
-                />
-              ) : (
-                <span style={{ fontSize: '48px', color: '#ccc' }}>📦</span>
-              )}
+              <img
+                src={imageSource}
+                alt={resource.title}
+                onError={(e) => {
+                  const target = e.currentTarget;
+                  if (!target.src.includes(FALLBACK_RESOURCE_IMAGE)) {
+                    target.src = FALLBACK_RESOURCE_IMAGE;
+                  }
+                }}
+              />
             </div>
 
             <div className={styles.cardHeader}>
@@ -83,7 +92,7 @@ function ResourceGrid({
             <div className={styles.cardBody}>
               <div className={styles.infoRow}>
                 <span className={styles.label}>Quantity:</span>
-                {userRole === 'admin' ? (
+                {userRole === 'admin' && !isMultiSelectMode ? (
                   <div className={styles.quantityEditor}>
                     <button 
                       className={styles.quantityBtn}
@@ -147,15 +156,40 @@ function ResourceGrid({
               )}
             </div>
 
-            {userRole === 'user' && (
+            {userRole === 'admin' && !isMultiSelectMode && (
+              <div className={styles.cardFooter}>
+                <div className={styles.cardAdminActions}>
+                  <button
+                    type="button"
+                    className={styles.cardEditButton}
+                    onClick={() => onEditResource?.(resource)}
+                    disabled={isDeletingCurrentResource}
+                  >
+                    Edit
+                  </button>
+                  <button
+                    type="button"
+                    className={styles.cardDeleteButton}
+                    onClick={() => onDeleteResource?.(resource.id)}
+                    disabled={isDeletingCurrentResource}
+                  >
+                    {isDeletingCurrentResource ? 'Deleting...' : 'Delete'}
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {(userRole === 'user' || (userRole === 'admin' && isMultiSelectMode)) && (
               <div className={styles.cardFooter}>
                 {isMultiSelectMode ? (
                   <button
-                    className={`${styles.reserveButton} ${isSelected ? styles.inCartButton : ''}`}
+                    className={`${styles.reserveButton} ${userRole === 'admin' ? styles.deleteSelectButton : ''} ${isSelected ? (userRole === 'admin' ? styles.deleteSelectActiveButton : styles.inCartButton) : ''}`}
                     onClick={() => onToggleResourceSelection(resource.id)}
-                    disabled={!isAvailable && !isSelected}
+                    disabled={userRole === 'user' ? (!isAvailable && !isSelected) : false}
                   >
-                    {!isAvailable && !isSelected ? 'Not Available' : isSelected ? 'In Cart' : 'Add to Cart'}
+                    {userRole === 'admin'
+                      ? (isSelected ? 'Selected' : 'Select')
+                      : (!isAvailable && !isSelected ? 'Not Available' : isSelected ? 'In Cart' : 'Add to Cart')}
                   </button>
                 ) : (
                   <button

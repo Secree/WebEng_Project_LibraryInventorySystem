@@ -2,7 +2,7 @@ import Inventory from '../Inventory/Inventory';
 import MyReservations from './MyReservations';
 import styles from './UserDashboard.module.css';
 import logo from '../../assets/images/MAES-logo.png';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 interface UserDashboardProps {
   user: { id: string; name: string; email: string; role: string };
@@ -12,10 +12,38 @@ interface UserDashboardProps {
 function UserDashboard({ user, onLogout }: UserDashboardProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [activeView, setActiveView] = useState<'inventory' | 'reservations'>('inventory');
+  const [showScrollTop, setShowScrollTop] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setShowScrollTop(window.scrollY > 350);
+    };
+
+    handleScroll();
+    window.addEventListener('scroll', handleScroll);
+
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+    };
+  }, []);
+
+  const handleInventoryManagement = () => {
+    setSidebarOpen(false);
+    setActiveView('inventory');
+  };
+
+  const handleReservationManagement = () => {
+    setSidebarOpen(false);
+    setActiveView('reservations');
+  };
 
   const handleLogout = () => {
     setSidebarOpen(false);
     onLogout();
+  };
+
+  const handleScrollToTop = () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   return (
@@ -29,9 +57,21 @@ function UserDashboard({ user, onLogout }: UserDashboardProps) {
           </div>
         </div>
         <div className={styles.sideBar}>
+          <button
+            onClick={() => setActiveView('inventory')}
+            className={`${styles.inventoryManagement} ${activeView === 'inventory' ? styles.active : ''}`}
+          >
+            Inventory Management
+          </button>
+          <button
+            onClick={() => setActiveView('reservations')}
+            className={`${styles.userManagement} ${activeView === 'reservations' ? styles.active : ''}`}
+          >
+            Reservation Management
+          </button>
           <button onClick={onLogout} className={styles.logoutBTN}>
             Logout
-          </button>          
+          </button>
         </div>
         <button
           className={styles.menuToggle}
@@ -41,30 +81,36 @@ function UserDashboard({ user, onLogout }: UserDashboardProps) {
           ☰
         </button>
         <div className={`${styles.mobileSidebar} ${sidebarOpen ? styles.open : ''}`}>
+          <button
+            onClick={handleInventoryManagement}
+            className={`${styles.inventoryManagement} ${activeView === 'inventory' ? styles.active : ''}`}
+          >
+            Inventory Management
+          </button>
+          <button
+            onClick={handleReservationManagement}
+            className={`${styles.userManagement} ${activeView === 'reservations' ? styles.active : ''}`}
+          >
+            Reservation Management
+          </button>
           <button onClick={handleLogout} className={styles.logoutBTN}>
             Logout
           </button>
         </div>
       </div>
-      <div className={styles.viewTabs}>
-        <button
-          type="button"
-          className={`${styles.viewTabButton} ${activeView === 'inventory' ? styles.viewTabButtonActive : ''}`}
-          onClick={() => setActiveView('inventory')}
-        >
-          Inventory
-        </button>
-        <button
-          type="button"
-          className={`${styles.viewTabButton} ${activeView === 'reservations' ? styles.viewTabButtonActive : ''}`}
-          onClick={() => setActiveView('reservations')}
-        >
-          My Reservations
-        </button>
-      </div>
       <div className={styles.body}>
         {activeView === 'inventory' ? <Inventory userRole="user" /> : <MyReservations />}
       </div>
+      {showScrollTop && (
+        <button
+          type="button"
+          className={styles.scrollTopButton}
+          onClick={handleScrollToTop}
+          aria-label="Scroll to top"
+        >
+          ↑
+        </button>
+      )}
     </div>
   );
 }

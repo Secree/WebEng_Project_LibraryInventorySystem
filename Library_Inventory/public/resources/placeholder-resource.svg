@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="640" height="360" viewBox="0 0 640 360" role="img" aria-labelledby="title desc">
+  <title id="title">Resource Placeholder</title>
+  <desc id="desc">Placeholder image used when a resource has no assigned photo.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#e8f1ff" />
+      <stop offset="100%" stop-color="#f4f8ff" />
+    </linearGradient>
+  </defs>
+
+  <rect width="640" height="360" fill="url(#bg)" />
+
+  <g transform="translate(320 160)">
+    <rect x="-74" y="-52" width="148" height="104" rx="14" fill="#ffffff" stroke="#bfd2f6" stroke-width="4" />
+    <path d="M-55 28 L-8 -10 L25 18 L46 0 L68 28" fill="none" stroke="#7ea7ec" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" />
+    <circle cx="-20" cy="-14" r="10" fill="#7ea7ec" />
+  </g>
+
+  <text x="320" y="255" text-anchor="middle" font-family="Arial, sans-serif" font-size="24" fill="#2f66d8" font-weight="700">
+    No Image Available
+  </text>
+  <text x="320" y="285" text-anchor="middle" font-family="Arial, sans-serif" font-size="16" fill="#5f7188">
+    This resource does not have a photo yet
+  </text>
+</svg>
