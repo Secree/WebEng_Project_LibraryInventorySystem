@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { cancelReservation, getMyReservations } from '../../services/api';
 import type { UserReservation } from '../../services/api';
+import { usePopupModal } from '../../components/common/PopupModalProvider';
 import styles from './UserDashboard.module.css';
 
 const formatDate = (value: string) => {
@@ -53,6 +54,7 @@ const isCancellableStatus = (status: string) => {
 };
 
 function MyReservations() {
+  const { showConfirm } = usePopupModal();
   const [reservations, setReservations] = useState<UserReservation[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -78,7 +80,11 @@ function MyReservations() {
   };
 
   const handleCancelReservation = async (reservationId: string) => {
-    const shouldContinue = window.confirm('Send cancellation request to admin?');
+    const shouldContinue = await showConfirm('Send cancellation request to admin?', {
+      title: 'Confirm Cancellation Request',
+      confirmText: 'Send Request',
+      tone: 'danger',
+    });
     if (!shouldContinue) {
       return;
     }

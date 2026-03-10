@@ -6,10 +6,6 @@ const resourceSchema = new mongoose.Schema({
     required: true,
     trim: true
   },
-  author: {
-    type: String,
-    trim: true
-  },
   category: {
     type: String,
     required: true,
@@ -23,13 +19,6 @@ const resourceSchema = new mongoose.Schema({
   isbn: {
     type: String,
     trim: true
-  },
-  publisher: {
-    type: String,
-    trim: true
-  },
-  yearPublished: {
-    type: Number
   },
   quantity: {
     type: Number,
@@ -90,6 +79,6 @@ resourceSchema.set('toJSON', {
 });
 
 // Index for search
-resourceSchema.index({ title: 'text', author: 'text', category: 'text', keywords: 'text', suggestedTopics: 'text' });
+resourceSchema.index({ title: 'text', category: 'text', keywords: 'text', suggestedTopics: 'text' });
 
 export default mongoose.model('Resource', resourceSchema);

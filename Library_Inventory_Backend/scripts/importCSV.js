@@ -40,7 +40,6 @@ function parseCSV(csvText) {
     
     const resource = {
       title: title,
-      author: '',
       category: typeOfMaterial,
       type: 'other',
       quantity: quantity,

@@ -16,6 +16,7 @@ console.log('MongoDB URI configured:', !!process.env.MONGODB_URI);
 console.log('JWT Secret configured:', !!process.env.JWT_SECRET);
 
 const app = express();
+const REQUEST_BODY_LIMIT = process.env.REQUEST_BODY_LIMIT || '10mb';
 
 const allowedOrigins = (process.env.FRONTEND_URL || 'http://localhost:5173,https://libraryinventory-f6b9d.web.app,https://libraryinventory-f6b9d.firebaseapp.com')
   .split(',')
@@ -54,7 +55,8 @@ app.use(cors({
   credentials: true,
   optionsSuccessStatus: 204,
 }));
-app.use(express.json());
+app.use(express.json({ limit: REQUEST_BODY_LIMIT }));
+app.use(express.urlencoded({ extended: true, limit: REQUEST_BODY_LIMIT }));
 app.use(cookieParser());
 
 // Routes

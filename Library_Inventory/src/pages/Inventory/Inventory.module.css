@@ -19,8 +19,6 @@
 .header {
   text-align: center;
   margin-bottom: 18px;
-  display: flex;
-  justify-content: space-between;
   align-items: center;
   flex-wrap: wrap;
   gap: 16px;
@@ -35,25 +33,6 @@
 .subtitle {
   color: #667892;
   font-size: 18px;
-}
-
-.addResourceButton {
-  background-color: var(--inv-primary);
-  color: white;
-  border: none;
-  padding: 12px 24px;
-  border-radius: 8px;
-  font-size: 16px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s;
-  white-space: nowrap;
-}
-
-.addResourceButton:hover {
-  background-color: var(--inv-primary-dark);
-  transform: translateY(-2px);
-  box-shadow: 0 4px 8px rgba(47, 102, 216, 0.3);
 }
 
 @media (max-width: 1000px) {
@@ -499,6 +478,11 @@
   border-top: 1px solid #f0f0f0;
 }
 
+.cardAdminActions {
+  display: flex;
+  gap: 8px;
+}
+
 .reserveButton {
   width: 100%;
   padding: 10px;
@@ -528,6 +512,70 @@
 
 .inCartButton:hover:not(:disabled) {
   background: var(--inv-primary-soft);
+}
+
+.cardEditButton,
+.cardDeleteButton {
+  padding: 10px;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.3s;
+}
+
+.cardEditButton {
+  flex: 0 0 auto;
+  min-width: 74px;
+  padding: 8px 12px;
+  font-size: 13px;
+  border: 1px solid var(--inv-border);
+  background: var(--inv-primary-soft);
+  color: var(--inv-primary-dark);
+}
+
+.cardEditButton:hover:not(:disabled) {
+  background: #dbeafe;
+}
+
+.cardEditButton:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.cardDeleteButton {
+  flex: 1;
+  border: 1px solid #fecaca;
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.cardDeleteButton:hover:not(:disabled) {
+  background: #fecaca;
+}
+
+.cardDeleteButton:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.deleteSelectButton {
+  background: #fff1f2;
+  color: #be123c;
+  border: 1px solid #fecdd3;
+}
+
+.deleteSelectButton:hover:not(:disabled) {
+  background: #ffe4e6;
+}
+
+.deleteSelectActiveButton {
+  background: #dc2626;
+  color: #ffffff;
+}
+
+.deleteSelectActiveButton:hover:not(:disabled) {
+  background: #b91c1c;
 }
 
 .noResults {
@@ -608,6 +656,27 @@
   border: 1px solid var(--inv-border);
   background: var(--inv-surface);
   color: var(--inv-text);
+}
+
+.floatingDeleteBar {
+  background: #fff7f7;
+  border: 1px solid #fecaca;
+  box-shadow: 0 12px 24px rgba(127, 29, 29, 0.2);
+}
+
+.floatingDeleteActionButton {
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  padding: 10px 14px;
+  border: 1px solid #dc2626;
+  background: #dc2626;
+  color: #fff;
+}
+
+.floatingDeleteActionButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 /* Quantity Confirmation Bar */
@@ -842,6 +911,19 @@
   background: var(--inv-surface);
   padding: 8px 10px;
   font-size: 14px;
+  color-scheme: light;
+}
+
+.modalDateInput::-webkit-calendar-picker-indicator {
+  opacity: 1;
+  filter: invert(15%) sepia(12%) saturate(861%) hue-rotate(175deg) brightness(94%) contrast(90%);
+  cursor: pointer;
+}
+
+@media (forced-colors: active) {
+  .modalDateInput::-webkit-calendar-picker-indicator {
+    filter: none;
+  }
 }
 
 .modalActions {
@@ -1033,7 +1115,8 @@
   }
 
   .floatingCartAddButton,
-  .floatingCartCancelButton {
+  .floatingCartCancelButton,
+  .floatingDeleteActionButton {
     flex: 1;
   }
 

@@ -103,6 +103,28 @@
     right: 0;
 }
 
+.scrollTopButton {
+  position: fixed;
+  right: 24px;
+  bottom: 24px;
+  width: 46px;
+  height: 46px;
+  border: none;
+  border-radius: 999px;
+  background: #2563EB;
+  color: #ffffff;
+  font-size: 24px;
+  line-height: 1;
+  cursor: pointer;
+  z-index: 1100;
+  box-shadow: 0 6px 20px rgba(37, 99, 235, 0.35);
+  transition: background 0.2s ease;
+}
+
+.scrollTopButton:hover {
+  background: #1d4ed8;
+}
+
 /* user management  */
 .userManagementContainer {
     display: flex;
@@ -292,6 +314,16 @@
   .responsiveTable th:first-child,
   .responsiveTable td:first-child {
     display: none;
+  }
+}
+
+@media (max-width: 700px) {
+  .scrollTopButton {
+    right: 16px;
+    bottom: 16px;
+    width: 42px;
+    height: 42px;
+    font-size: 20px;
   }
 }
 

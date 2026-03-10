@@ -6,6 +6,7 @@ import {
   getAdminReservations,
   type AdminReservation,
 } from '../../services/api';
+import { usePopupModal } from '../../components/common/PopupModalProvider';
 import styles from './AdminDashboard.module.css';
 
 type ReservationFilter = 'all' | 'pending' | 'ongoing' | 'cancel_requests';
@@ -56,6 +57,7 @@ const statusClassName = (status: string) => {
 };
 
 function AdminReservations() {
+  const { showConfirm } = usePopupModal();
   const [reservations, setReservations] = useState<AdminReservation[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -103,8 +105,13 @@ function AdminReservations() {
   }, [filter, reservations]);
 
   const handleConfirmDelete = async (reservationId: string) => {
-    const shouldContinue = window.confirm(
-      'Confirm cancellation and permanently delete this reservation?'
+    const shouldContinue = await showConfirm(
+      'Confirm cancellation and permanently delete this reservation?',
+      {
+        title: 'Confirm Reservation Deletion',
+        confirmText: 'Delete',
+        tone: 'danger',
+      }
     );
     if (!shouldContinue) {
       return;
@@ -127,7 +134,10 @@ function AdminReservations() {
   };
 
   const handleApproveReservation = async (reservationId: string) => {
-    const shouldContinue = window.confirm('Approve this pending reservation?');
+    const shouldContinue = await showConfirm('Approve this pending reservation?', {
+      title: 'Approve Reservation',
+      confirmText: 'Approve',
+    });
     if (!shouldContinue) {
       return;
     }
@@ -159,7 +169,11 @@ function AdminReservations() {
   };
 
   const handleAdminCancelApproved = async (reservationId: string) => {
-    const shouldContinue = window.confirm('Cancel this approved reservation now?');
+    const shouldContinue = await showConfirm('Cancel this approved reservation now?', {
+      title: 'Confirm Admin Cancellation',
+      confirmText: 'Cancel Reservation',
+      tone: 'danger',
+    });
     if (!shouldContinue) {
       return;
     }

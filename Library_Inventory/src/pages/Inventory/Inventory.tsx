@@ -1,11 +1,14 @@
 import { useState, useEffect, useMemo } from 'react';
-import { getAllResources, updateResource, reserveResource, createResource } from '../../services/api';
+import { getAllResources, updateResource, reserveResource, createResource, deleteResource } from '../../services/api';
 import styles from './Inventory.module.css';
 import SearchToolbar from '../../components/inventory/SearchToolbar/SearchToolbar';
 import ResourceGrid from '../../components/inventory/ResourceGrid';
 import CheckoutModal from '../../components/inventory/CheckoutModal';
 import MultiCheckoutModal from '../../components/inventory/MultiCheckoutModal';
 import CartOverviewModal from '../../components/inventory/CartOverviewModal';
+import AddResourceModal from '../../components/inventory/AddResourceModal/AddResourceModal';
+import EditResourceModal from '../../components/inventory/AddResourceModal/EditResourceModal';
+import { usePopupModal } from '../../components/common/PopupModalProvider';
 import type {
   MultiReservationFailureItem,
   MultiReservationReceipt,
@@ -13,15 +16,18 @@ import type {
   Resource,
   ReservationReceipt,
 } from '../../components/inventory/types';
-import AddResourceModal from '../../components/inventory/AddResourceModal';
 
 interface InventoryProps {
   userRole?: string;
 }
 
-type FilterTab = 'All' | 'Books' | 'Modules' | 'Equipment';
+interface EditableResource extends Resource {
+  imageUrl?: string;
+}
 
-const FILTER_TABS: FilterTab[] = ['All', 'Books', 'Modules', 'Equipment'];
+type CategoryTab = 'All' | 'Books' | 'Modules' | 'Equipment';
+
+const CATEGORY_TABS: CategoryTab[] = ['All', 'Books', 'Modules', 'Equipment'];
 const MAX_BORROW_DURATION_DAYS = 14;
 
 const parseDateValue = (dateValue: string) => {
@@ -49,7 +55,7 @@ const getDueDateFromBorrowDate = (borrowDate: string) => {
   return dueDate.toISOString();
 };
 
-const mapResourceToTab = (resource: Resource): Exclude<FilterTab, 'All'> => {
+const mapResourceToCategoryTab = (resource: Resource): Exclude<CategoryTab, 'All'> => {
   // Use category (actual material type from CSV) if available, otherwise fall back to type
   const cat = (resource.category || resource.type || '').toLowerCase();
 
@@ -74,9 +80,10 @@ const mapResourceToTab = (resource: Resource): Exclude<FilterTab, 'All'> => {
 };
 
 function Inventory({ userRole }: InventoryProps) {
+  const { showAlert, showConfirm } = usePopupModal();
   const [resources, setResources] = useState<Resource[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedType, setSelectedType] = useState<FilterTab>('All');
+  const [selectedCategory, setSelectedCategory] = useState<CategoryTab>('All');
   const [isMultiSelectMode, setIsMultiSelectMode] = useState(false);
   const [selectedResourceIds, setSelectedResourceIds] = useState<string[]>([]);
   const [cartResourceIds, setCartResourceIds] = useState<string[]>([]);
@@ -86,11 +93,15 @@ function Inventory({ userRole }: InventoryProps) {
   const [isMultiCheckoutModalOpen, setIsMultiCheckoutModalOpen] = useState(false);
   const [isCartModalOpen, setIsCartModalOpen] = useState(false);
   const [isAddResourceModalOpen, setIsAddResourceModalOpen] = useState(false);
+  const [isEditResourceModalOpen, setIsEditResourceModalOpen] = useState(false);
+  const [resourceToEdit, setResourceToEdit] = useState<EditableResource | null>(null);
   const [showFloatingCartActions, setShowFloatingCartActions] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  // const [pendingQuantityChanges, setPendingQuantityChanges] = useState<Record<string, number>>({});
-  // const [isSaving, setIsSaving] = useState(false);
+  const [pendingQuantityChanges, setPendingQuantityChanges] = useState<Record<string, number>>({});
+  const [isSaving, setIsSaving] = useState(false);
+  const [isDeletingResources, setIsDeletingResources] = useState(false);
+  const [deletingResourceIds, setDeletingResourceIds] = useState<string[]>([]);
 
   // Fetch resources on mount
   useEffect(() => {
@@ -130,52 +141,41 @@ function Inventory({ userRole }: InventoryProps) {
   };
 
   const handleQuantityUpdate = async (resourceId: string, newQuantity: number) => {
-    try {
-      // Optimistically update the UI
-      setResources(prevResources =>
-        prevResources.map(resource =>
-          resource.id === resourceId
-            ? { ...resource, quantity: newQuantity, status: newQuantity > 0 ? 'available' : 'reserved' }
-            : resource
-        )
-      );
+    setResources((prevResources) =>
+      prevResources.map((resource) =>
+        resource.id === resourceId ? { ...resource, quantity: newQuantity } : resource
+      )
+    );
 
-      // Update the backend
-      const updatedResource = await updateResource(resourceId, { quantity: newQuantity });
-
-      setResources(prevResources =>
-        prevResources.map(resource =>
-          resource.id === resourceId
-            ? updatedResource
-            : resource
-        )
-      );
-    } catch (err: any) {
-      console.error('Error updating quantity:', err);
-      setError('Failed to update quantity. Please try again.');
-      // Revert on error
-      fetchResources();
-    }
+    setPendingQuantityChanges((prevChanges) => ({
+      ...prevChanges,
+      [resourceId]: newQuantity,
+    }));
   };
 
   const handleConfirmQuantityChanges = async () => {
-    if (Object.keys(pendingQuantityChanges).length === 0) {
+    const pendingEntries = Object.entries(pendingQuantityChanges);
+    if (pendingEntries.length === 0) {
       return;
     }
 
     setIsSaving(true);
+    setError('');
+
     try {
+      // Update all pending changes
       await Promise.all(
-        Object.entries(pendingQuantityChanges).map(([resourceId, quantity]) =>
+        pendingEntries.map(([resourceId, quantity]) =>
           updateResource(resourceId, { quantity })
         )
       );
+
       setPendingQuantityChanges({});
       await fetchResources();
-      setError('');
     } catch (err: any) {
-      console.error('Error saving quantity changes:', err);
+      console.error('Error confirming quantity changes:', err);
       setError('Failed to save quantity changes. Please try again.');
+      fetchResources();
     } finally {
       setIsSaving(false);
     }
@@ -191,10 +191,181 @@ function Inventory({ userRole }: InventoryProps) {
       const newResource = await createResource(resourceData);
       setResources(prev => [newResource, ...prev]);
       setError('');
-      alert('Resource added successfully!');
+      void showAlert('Resource added successfully!', {
+        title: 'Success',
+        tone: 'success',
+      });
     } catch (err: any) {
       console.error('Error creating resource:', err);
       throw err; // Re-throw to let the modal handle it
+    }
+  };
+
+  const handleOpenEditResource = (resource: Resource) => {
+    setResourceToEdit(resource as EditableResource);
+    setIsEditResourceModalOpen(true);
+  };
+
+  const handleCloseEditResourceModal = () => {
+    setIsEditResourceModalOpen(false);
+    setResourceToEdit(null);
+  };
+
+  const handleSaveEditedResource = async (resourceId: string, resourceData: any) => {
+    try {
+      const updatedResource = await updateResource(resourceId, resourceData);
+
+      setResources((prevResources) =>
+        prevResources.map((resource) =>
+          resource.id === resourceId ? updatedResource : resource
+        )
+      );
+
+      setPendingQuantityChanges((prevChanges) => {
+        if (!(resourceId in prevChanges)) {
+          return prevChanges;
+        }
+
+        const nextChanges = { ...prevChanges };
+        delete nextChanges[resourceId];
+        return nextChanges;
+      });
+
+      setError('');
+      await showAlert('Resource updated successfully!', {
+        title: 'Success',
+        tone: 'success',
+      });
+    } catch (err: any) {
+      console.error('Error updating resource:', err);
+      throw err;
+    }
+  };
+
+  const handleDeleteSelectedResources = async () => {
+    if (selectedResourceIds.length === 0 || isDeletingResources) {
+      return;
+    }
+
+    const resourceCount = selectedResourceIds.length;
+    const confirmed = await showConfirm(
+      `Delete ${resourceCount} resource${resourceCount > 1 ? 's' : ''}? This action cannot be undone.`,
+      {
+        title: 'Confirm Deletion',
+        confirmText: 'Delete',
+        tone: 'danger',
+      }
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    setIsDeletingResources(true);
+    setError('');
+
+    try {
+      const selectedIds = [...selectedResourceIds];
+      const deletionResults = await Promise.allSettled(
+        selectedIds.map((resourceId) => deleteResource(resourceId))
+      );
+
+      const successfulIds: string[] = [];
+      const failedIds: string[] = [];
+
+      deletionResults.forEach((result, index) => {
+        const resourceId = selectedIds[index];
+
+        if (result.status === 'fulfilled') {
+          successfulIds.push(resourceId);
+        } else {
+          failedIds.push(resourceId);
+        }
+      });
+
+      if (successfulIds.length > 0) {
+        const successfulIdSet = new Set(successfulIds);
+
+        setResources((prevResources) =>
+          prevResources.filter((resource) => !successfulIdSet.has(resource.id))
+        );
+        setCartResourceIds((prevIds) => prevIds.filter((id) => !successfulIdSet.has(id)));
+        setPendingQuantityChanges((prevChanges) =>
+          Object.fromEntries(
+            Object.entries(prevChanges).filter(([resourceId]) => !successfulIdSet.has(resourceId))
+          )
+        );
+      }
+
+      if (failedIds.length > 0) {
+        setSelectedResourceIds(failedIds);
+        setError(
+          `Deleted ${successfulIds.length} resource${successfulIds.length === 1 ? '' : 's'}. ` +
+          `Failed to delete ${failedIds.length} resource${failedIds.length === 1 ? '' : 's'}.`
+        );
+        return;
+      }
+
+      setSelectedResourceIds([]);
+      setIsMultiSelectMode(false);
+      await showAlert(
+        `Deleted ${successfulIds.length} resource${successfulIds.length === 1 ? '' : 's'} successfully.`,
+        {
+          title: 'Success',
+          tone: 'success',
+        }
+      );
+    } catch (err: any) {
+      console.error('Error deleting resources:', err);
+      setError('Failed to delete selected resources. Please try again.');
+    } finally {
+      setIsDeletingResources(false);
+    }
+  };
+
+  const handleDeleteSingleResource = async (resourceId: string) => {
+    if (deletingResourceIds.includes(resourceId)) {
+      return;
+    }
+
+    const targetResource = resources.find((resource) => resource.id === resourceId);
+    const confirmed = await showConfirm(
+      `Delete \"${targetResource?.title || 'this resource'}\"? This action cannot be undone.`,
+      {
+        title: 'Confirm Deletion',
+        confirmText: 'Delete',
+        tone: 'danger',
+      }
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    setDeletingResourceIds((prev) => [...prev, resourceId]);
+    setError('');
+
+    try {
+      await deleteResource(resourceId);
+
+      setResources((prevResources) => prevResources.filter((resource) => resource.id !== resourceId));
+      setCartResourceIds((prevIds) => prevIds.filter((id) => id !== resourceId));
+      setSelectedResourceIds((prevIds) => prevIds.filter((id) => id !== resourceId));
+      setPendingQuantityChanges((prevChanges) => {
+        const nextChanges = { ...prevChanges };
+        delete nextChanges[resourceId];
+        return nextChanges;
+      });
+
+      await showAlert('Resource deleted successfully.', {
+        title: 'Success',
+        tone: 'success',
+      });
+    } catch (err: any) {
+      console.error('Error deleting resource:', err);
+      setError('Failed to delete resource. Please try again.');
+    } finally {
+      setDeletingResourceIds((prev) => prev.filter((id) => id !== resourceId));
     }
   };
 
@@ -205,6 +376,7 @@ function Inventory({ userRole }: InventoryProps) {
       const query = searchQuery.toLowerCase();
       filtered = filtered.filter((resource) =>
         resource.title.toLowerCase().includes(query) ||
+        resource.category.toLowerCase().includes(query) ||
         resource.type.toLowerCase().includes(query) ||
         resource.keywords.toLowerCase().includes(query) ||
         resource.suggestedTopics.toLowerCase().includes(query)
@@ -215,15 +387,15 @@ function Inventory({ userRole }: InventoryProps) {
   }, [resources, searchQuery]);
 
   const filteredResources = useMemo(() => {
-    if (selectedType === 'All') {
+    if (selectedCategory === 'All') {
       return searchMatchedResources;
     }
 
-    return searchMatchedResources.filter((resource) => mapResourceToTab(resource) === selectedType);
-  }, [searchMatchedResources, selectedType]);
+    return searchMatchedResources.filter((resource) => mapResourceToCategoryTab(resource) === selectedCategory);
+  }, [searchMatchedResources, selectedCategory]);
 
-  const typeCounts = useMemo(() => {
-    const counts: Record<FilterTab, number> = {
+  const categoryCounts = useMemo(() => {
+    const counts: Record<CategoryTab, number> = {
       All: searchMatchedResources.length,
       Books: 0,
       Modules: 0,
@@ -231,7 +403,7 @@ function Inventory({ userRole }: InventoryProps) {
     };
 
     searchMatchedResources.forEach((resource) => {
-      const tab = mapResourceToTab(resource);
+      const tab = mapResourceToCategoryTab(resource);
       counts[tab] += 1;
     });
 
@@ -340,7 +512,9 @@ function Inventory({ userRole }: InventoryProps) {
     );
 
     if (availableItems.length === 0) {
-      alert('No available materials to checkout.');
+      void showAlert('No available materials to checkout.', {
+        title: 'No Available Items',
+      });
       return;
     }
 
@@ -440,7 +614,7 @@ function Inventory({ userRole }: InventoryProps) {
 
   const clearFilters = () => {
     setSearchQuery('');
-    setSelectedType('All');
+    setSelectedCategory('All');
   };
 
   if (loading) {
@@ -460,31 +634,27 @@ function Inventory({ userRole }: InventoryProps) {
           <h1 className={styles.title}>Find Your Resources</h1>
           <p className={styles.subtitle}>Search through our collection of books, modules, and equipment</p>
         </div>
-        {userRole === 'admin' && (
-          <button 
-            className={styles.addResourceButton}
-            onClick={() => setIsAddResourceModalOpen(true)}
-          >
-            + Add New Resource
-          </button>
-        )}
       </div>
 
       <SearchToolbar
         searchQuery={searchQuery}
-        selectedType={selectedType}
-        types={FILTER_TABS}
-        typeCounts={typeCounts}
+        selectedCategory={selectedCategory}
+        categories={CATEGORY_TABS}
+        categoryCounts={categoryCounts}
         filteredCount={filteredResources.length}
         totalCount={resources.length}
         showMultiSelectControls={userRole === 'user'}
         isMultiSelectMode={isMultiSelectMode}
         selectedCount={selectedResourceIds.length}
         onSearchChange={setSearchQuery}
-        onTypeChange={(value) => setSelectedType(value as FilterTab)}
+        onCategoryChange={(value) => setSelectedCategory(value as CategoryTab)}
         onToggleMultiSelectMode={handleToggleMultiSelectMode}
         onAddToCart={handleAddToCart}
         onCancelMultiSelect={handleCancelMultiSelect}
+        onDeleteSelectedResources={handleDeleteSelectedResources}
+        isDeleteActionLoading={isDeletingResources}
+        userRole={userRole}
+        onAddResourceClick={() => setIsAddResourceModalOpen(true)}
       />
 
       {error && <div className={styles.error}>{error}</div>}
@@ -496,9 +666,40 @@ function Inventory({ userRole }: InventoryProps) {
         selectedResourceIds={selectedResourceIds}
         onReserve={handleReserve}
         onToggleResourceSelection={handleToggleResourceSelection}
+        onEditResource={userRole === 'admin' ? handleOpenEditResource : undefined}
+        onDeleteResource={userRole === 'admin' ? handleDeleteSingleResource : undefined}
+        deletingResourceIds={deletingResourceIds}
         onClearFilters={clearFilters}
         onQuantityUpdate={userRole === 'admin' ? handleQuantityUpdate : undefined}
       />
+
+      {userRole === 'admin' && Object.keys(pendingQuantityChanges).length > 0 && (
+        <div className={styles.quantityConfirmationBar}>
+          <div className={styles.confirmationContent}>
+            <p className={styles.confirmationText}>
+              {Object.keys(pendingQuantityChanges).length} item{Object.keys(pendingQuantityChanges).length > 1 ? 's' : ''} pending changes
+            </p>
+            <div className={styles.confirmationButtons}>
+              <button
+                type="button"
+                className={styles.confirmButton}
+                onClick={handleConfirmQuantityChanges}
+                disabled={isSaving}
+              >
+                {isSaving ? 'Saving...' : 'Confirm Changes'}
+              </button>
+              <button
+                type="button"
+                className={styles.cancelChangesButton}
+                onClick={handleCancelQuantityChanges}
+                disabled={isSaving}
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {userRole === 'user' && isMultiSelectMode && showFloatingCartActions && (
         <div className={styles.floatingCartBar}>
@@ -515,6 +716,33 @@ function Inventory({ userRole }: InventoryProps) {
               disabled={selectedResourceIds.length === 0}
             >
               Add to Cart ({selectedResourceIds.length})
+            </button>
+            <button
+              type="button"
+              className={styles.floatingCartCancelButton}
+              onClick={handleCancelMultiSelect}
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
+
+      {userRole === 'admin' && isMultiSelectMode && showFloatingCartActions && (
+        <div className={`${styles.floatingCartBar} ${styles.floatingDeleteBar}`}>
+          <p className={styles.floatingCartText}>
+            {selectedResourceIds.length > 0
+              ? `${selectedResourceIds.length} item(s) selected for deletion`
+              : 'Select resources to delete'}
+          </p>
+          <div className={styles.floatingCartButtons}>
+            <button
+              type="button"
+              className={styles.floatingDeleteActionButton}
+              onClick={handleDeleteSelectedResources}
+              disabled={selectedResourceIds.length === 0 || isDeletingResources}
+            >
+              {isDeletingResources ? 'Deleting...' : `Delete (${selectedResourceIds.length})`}
             </button>
             <button
               type="button"
@@ -554,6 +782,13 @@ function Inventory({ userRole }: InventoryProps) {
         isOpen={isAddResourceModalOpen}
         onClose={() => setIsAddResourceModalOpen(false)}
         onSave={handleSaveNewResource}
+      />
+
+      <EditResourceModal
+        isOpen={isEditResourceModalOpen}
+        resource={resourceToEdit}
+        onClose={handleCloseEditResourceModal}
+        onSave={handleSaveEditedResource}
       />
     </div>
   );
