@@ -59,6 +59,7 @@ function EditResourceModal({ isOpen, resource, onClose, onSave }: EditResourceMo
   const [imagePreview, setImagePreview] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [isDragOver, setIsDragOver] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   void imageFile;
@@ -86,17 +87,15 @@ function EditResourceModal({ isOpen, resource, onClose, onSave }: EditResourceMo
     }));
   };
 
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) {
-      return;
-    }
-
+  const applyImageFile = (file: File) => {
     if (file.size > 5 * 1024 * 1024) {
       setError('Image size should be less than 5MB');
       return;
     }
-
+    if (!file.type.startsWith('image/')) {
+      setError('Only image files are allowed');
+      return;
+    }
     setImageFile(file);
     const reader = new FileReader();
     reader.onloadend = () => {
@@ -104,6 +103,32 @@ function EditResourceModal({ isOpen, resource, onClose, onSave }: EditResourceMo
     };
     reader.readAsDataURL(file);
     setError('');
+  };
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    applyImageFile(file);
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragOver(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragOver(false);
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragOver(false);
+    const file = e.dataTransfer.files?.[0];
+    if (file) applyImageFile(file);
   };
 
   const handleRemoveImage = () => {
@@ -249,29 +274,41 @@ function EditResourceModal({ isOpen, resource, onClose, onSave }: EditResourceMo
 
           <div className={styles.formGroup}>
             <label htmlFor="image">Image</label>
+            <input
+              type="file"
+              id="image"
+              ref={fileInputRef}
+              accept="image/*"
+              onChange={handleImageChange}
+              style={{ display: 'none' }}
+            />
             <div className={styles.formInput}>
-              <input
-                type="file"
-                id="image"
-                ref={fileInputRef}
-                accept="image/*"
-                onChange={handleImageChange}
-                className={styles.fileInput}
-              />
-            </div>
-            <div className={styles.formInput}>
-              <div className={styles.imageFilePreviewContainer}>
+              <div
+                className={styles.imageFilePreviewContainer}
+                onDragOver={handleDragOver}
+                onDragLeave={handleDragLeave}
+                onDrop={handleDrop}
+              >
                 {imagePreview ? (
-                  <div className={styles.imagePreviewContainer}>
+                  <div
+                    className={`${styles.imagePreviewContainer} ${isDragOver ? styles.dragOver : ''}`}
+                    onClick={() => fileInputRef.current?.click()}
+                    style={{ cursor: 'pointer' }}
+                    title="Click or drop a new image to replace"
+                  >
                     <img src={imagePreview} alt="Preview" className={styles.imagePreview} />
-                    <button type="button" onClick={handleRemoveImage} className={styles.removeImageBtn}>
+                    <button type="button" onClick={(e) => { e.stopPropagation(); handleRemoveImage(); }} className={styles.removeImageBtn}>
                       Remove Image
                     </button>
+                    <p style={{ margin: '6px 0 0', color: '#6b7280', fontSize: '12px' }}>Drop or click image to replace</p>
                   </div>
                 ) : (
-                  <div className={styles.uploadPlaceholder}>
-                    <span>📷</span>
-                    <p>Click to upload image (max 5MB)</p>
+                  <div
+                    className={`${styles.uploadPlaceholder} ${isDragOver ? styles.dragOver : ''}`}
+                    onClick={() => fileInputRef.current?.click()}
+                  >
+                    <span>{isDragOver ? '⬇️' : '📷'}</span>
+                    <p>{isDragOver ? 'Drop image here' : 'Click or drag & drop image (max 5MB)'}</p>
                   </div>
                 )}
               </div>

@@ -1,5 +1,5 @@
 // Script to remove duplicate resources from MongoDB
-// Duplicates are identified by matching title + category
+// Duplicates are identified by matching title (name) only
 // Keeps the document with the highest quantity; others are deleted.
 
 import mongoose from 'mongoose';
@@ -13,13 +13,12 @@ async function removeDuplicates() {
   await mongoose.connect(process.env.MONGODB_URI);
   console.log(`✅ Connected to MongoDB: ${mongoose.connection.name}`);
 
-  // Group all resources by title + category
+  // Group all resources by title (name) only
   const duplicates = await Resource.aggregate([
     {
       $group: {
         _id: {
-          title: { $toLower: { $trim: { input: '$title' } } },
-          category: { $toLower: { $trim: { input: '$category' } } }
+          title: { $toLower: { $trim: { input: '$title' } } }
         },
         docs: { $push: { id: '$_id', quantity: '$quantity', createdAt: '$createdAt' } },
         count: { $sum: 1 }
@@ -49,7 +48,7 @@ async function removeDuplicates() {
     const [keep, ...toDelete] = sorted;
     const idsToDelete = toDelete.map(d => d.id);
 
-    console.log(`  📌 "${group._id.title}" (${group._id.category})`);
+    console.log(`  📌 "${group._id.title}"`);
     console.log(`     Keeping _id: ${keep.id} (qty: ${keep.quantity})`);
     console.log(`     Deleting ${idsToDelete.length} duplicate(s)...`);
 
